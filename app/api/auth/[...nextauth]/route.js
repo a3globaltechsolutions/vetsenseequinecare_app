@@ -14,24 +14,21 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Check if email and password are provided
-        if (!credentials.email || !credentials.password) {
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
-        // Find user in database
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+          where: { email: credentials.email },
         });
 
-        // If user doesn't exist or password doesn't match
-        if (!user || !bcrypt.compareSync(credentials.password, user.password)) {
-          return null;
-        }
+        if (!user) return null;
 
-        // Return user object without password
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isPasswordValid) return null;
+
         return {
           id: user.id,
           email: user.email,
@@ -41,19 +38,17 @@ export const authOptions = {
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-      }
+      if (user) token.role = user.role;
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.sub;
-      session.user.role = token.role;
+      if (token) {
+        session.user.id = token.sub;
+        session.user.role = token.role;
+      }
       return session;
     },
   },
@@ -61,8 +56,10 @@ export const authOptions = {
     signIn: "/auth/signin",
     signUp: "/auth/signup",
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
 
+// export { authOptions };
 export { handler as GET, handler as POST };
