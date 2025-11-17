@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -9,9 +10,18 @@ export default function HomePage() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-              V
+            <div className="w-12 h-12 flex items-center justify-center">
+              <Link href="/">
+                <Image
+                  src="/vetsense_logo.jpg"
+                  alt="Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain rounded-full"
+                />
+              </Link>
             </div>
+
             <div>
               <h1 className="text-xl font-bold text-gray-900">VETSENSE</h1>
               <p className="text-xs text-gray-600">Equine Care & Consulting</p>
