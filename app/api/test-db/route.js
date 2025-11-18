@@ -1,7 +1,3 @@
-// app/api/test-db/route.js
-// Create this file temporarily to test DB connection
-// DELETE after testing!
-
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
