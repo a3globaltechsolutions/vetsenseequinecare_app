@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 // GET single horse
-export async function GET(req, { params }) {
+export async function GET({ params }) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
