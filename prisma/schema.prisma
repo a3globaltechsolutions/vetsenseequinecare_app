@@ -8,19 +8,36 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String        @id @default(cuid())
+  email        String        @unique
   passwordHash String
   name         String
   phone        String?
+  role         Role          @default(OWNER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   title        String?
-  role         Role     @default(OWNER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations (will be used in Phase 3)
-  ownedHorses  Ownership[]
   activityLogs ActivityLog[]
+  ownedHorses  Ownership[]
+}
+
+model Horse {
+  id             String          @id @default(cuid())
+  name           String
+  breed          String?
+  age            Int?
+  color          String?
+  sex            Sex?
+  microchip      String?         @unique
+  imageUrl       String?
+  status         HorseStatus     @default(ACTIVE)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  activityLogs   ActivityLog[]
+  documents      Document[]
+  medicalRecords MedicalRecord[]
+  owners         Ownership[]
+  vaccinations   Vaccination[]
 }
 
 model Ownership {
@@ -29,10 +46,57 @@ model Ownership {
   ownerId   String
   startDate DateTime  @default(now())
   endDate   DateTime?
-
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  horse     Horse     @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@unique([horseId, ownerId])
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid())
+  horseId     String
+  diagnosis   String
+  treatment   String
+  notes       String?
+  attachments String[]
+  recordDate  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  horse       Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+}
+
+model Vaccination {
+  id          String   @id @default(cuid())
+  horseId     String
+  vaccineName String
+  dateGiven   DateTime
+  nextDue     DateTime
+  batchNumber String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  horse       Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  horseId     String?
+  type        DocumentType
+  passportNo  String?      @unique
+  fileUrl     String
+  fingerprint String
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  horse       Horse?       @relation(fields: [horseId], references: [id], onDelete: Cascade)
+}
+
+model SealAsset {
+  id          String   @id @default(cuid())
+  type        SealType
+  pngUrl      String
+  svgUrl      String?
+  fingerprint String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
 }
 
 model ActivityLog {
@@ -42,11 +106,36 @@ model ActivityLog {
   action    String
   details   String?
   createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  horse     Horse?   @relation(fields: [horseId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 enum Role {
   VET
   OWNER
+}
+
+enum Sex {
+  STALLION
+  MARE
+  GELDING
+}
+
+enum HorseStatus {
+  ACTIVE
+  RETIRED
+  DECEASED
+}
+
+enum DocumentType {
+  PASSPORT
+  AUTHENTICATION_SEAL
+  MEDICAL_REPORT
+}
+
+enum SealType {
+  CIRCULAR
+  EMBLEM
+  WAX
+  SIGNATURE_OVERLAY
 }

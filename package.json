@@ -12,7 +12,10 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:reset": "prisma migrate reset",
-    "create-users": "node scripts/createUsers.js"
+    "create-users": "node scripts/createUsers.js",
+    "seed": "node scripts/seedDatabase.js",
+    "db:stats": "node scripts/viewStats.js",
+    "db:reset": "node scripts/resetDatabase.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
