@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
+  const { data: session } = useSession();
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100">
       {/* Header */}
@@ -135,7 +139,7 @@ export default function HomePage() {
             &quot;Our passion to care fuels our penchant to serve&quot;
           </p>
           <p className="text-sm">
-            📞 07067677446 • ✉ vetsense.equinecare@gmail.com • 📍 Kaduna,
+            📞 07067677446 • ✉ Vetsense.equinecare@gmail.com • 📍 Kaduna,
             Nigeria
           </p>
         </footer>
