@@ -35,6 +35,28 @@ export default function VetDashboard() {
     await signOut({ callbackUrl: "/" });
   };
 
+  // Get next upcoming vaccination for a horse
+  const getNextVaccination = (horse) => {
+    if (!horse.vaccinations || horse.vaccinations.length === 0) {
+      return null;
+    }
+
+    const upcoming = horse.vaccinations
+      .filter((v) => new Date(v.nextDue) > new Date())
+      .sort((a, b) => new Date(a.nextDue) - new Date(b.nextDue));
+
+    return upcoming[0] || null;
+  };
+
+  // Calculate days until vaccination
+  const getDaysUntil = (date) => {
+    const today = new Date();
+    const dueDate = new Date(date);
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const filteredHorses = horses.filter(
     (h) =>
       h.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -265,70 +287,132 @@ export default function VetDashboard() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredHorses.map((horse) => (
-              <Card
-                key={horse.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                {horse.imageUrl ? (
-                  <div className="relative w-full h-48">
-                    <Image
-                      src={horse.imageUrl}
-                      alt={horse.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                    <svg
-                      className="w-20 h-20 text-purple-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+            {filteredHorses.map((horse) => {
+              const nextVaccination = getNextVaccination(horse);
+              const daysUntil = nextVaccination
+                ? getDaysUntil(nextVaccination.nextDue)
+                : null;
+
+              return (
+                <Card
+                  key={horse.id}
+                  className="overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  {horse.imageUrl ? (
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={horse.imageUrl}
+                        alt={horse.name}
+                        fill
+                        className="object-cover"
                       />
-                    </svg>
-                  </div>
-                )}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-xl font-bold">{horse.name}</h3>
-                    <Badge
-                      variant={
-                        horse.status === "ACTIVE" ? "default" : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {horse.status}
-                    </Badge>
-                  </div>
-                  <p className="text-gray-600 text-sm mb-3">
-                    {horse.breed || "Unknown breed"} •{" "}
-                    {horse.age ? `${horse.age} years` : "Age unknown"}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                    <span>📋 {horse._count?.medicalRecords || 0} records</span>
-                    <span>💉 {horse._count?.vaccinations || 0} vaccines</span>
-                  </div>
-                  {horse.owners?.length > 0 && (
-                    <p className="text-xs text-gray-500 mb-3">
-                      Owner: {horse.owners[0].owner.name}
-                    </p>
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                      <svg
+                        className="w-20 h-20 text-purple-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                        />
+                      </svg>
+                    </div>
                   )}
-                  <Link href={`/horses/${horse.id}`}>
-                    <Button className="w-full" size="sm">
-                      View Details
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            ))}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-xl font-bold">{horse.name}</h3>
+                      <Badge
+                        variant={
+                          horse.status === "ACTIVE" ? "default" : "secondary"
+                        }
+                        className="text-xs"
+                      >
+                        {horse.status}
+                      </Badge>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3">
+                      {horse.breed || "Unknown breed"} •{" "}
+                      {horse.age ? `${horse.age} years` : "Age unknown"}
+                    </p>
+
+                    {/* Vaccination Reminder */}
+                    {nextVaccination && (
+                      <div
+                        className={`mb-4 p-3 rounded ${
+                          daysUntil <= 7
+                            ? "bg-red-50 border border-red-200"
+                            : daysUntil <= 30
+                            ? "bg-yellow-50 border border-yellow-200"
+                            : "bg-green-50 border border-green-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <svg
+                            className={`w-4 h-4 ${
+                              daysUntil <= 7
+                                ? "text-red-600"
+                                : daysUntil <= 30
+                                ? "text-yellow-600"
+                                : "text-green-600"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p className="text-sm font-semibold">
+                            Next Vaccination
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-700">
+                          {nextVaccination.vaccineName}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {daysUntil > 0
+                            ? `Due in ${daysUntil} day${
+                                daysUntil !== 1 ? "s" : ""
+                              }`
+                            : daysUntil === 0
+                            ? "Due today!"
+                            : `Overdue by ${Math.abs(daysUntil)} day${
+                                Math.abs(daysUntil) !== 1 ? "s" : ""
+                              }`}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                      <span>
+                        📋 {horse._count?.medicalRecords || 0} records
+                      </span>
+                      <span>💉 {horse._count?.vaccinations || 0} vaccines</span>
+                    </div>
+                    {horse.owners?.length > 0 && (
+                      <p className="text-xs text-gray-500 mb-3">
+                        Owner: {horse.owners[0].owner.name}
+                      </p>
+                    )}
+                    <Link href={`/horses/${horse.id}`}>
+                      <Button className="w-full" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
 

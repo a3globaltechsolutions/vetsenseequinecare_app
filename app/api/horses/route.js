@@ -18,15 +18,11 @@ export async function GET(req) {
       // Vet sees all horses
       horses = await prisma.horse.findMany({
         include: {
+          vaccinations: true, // 👈 ADD THIS
           owners: {
             include: {
               owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                },
+                select: { id: true, name: true, email: true, phone: true },
               },
             },
           },
@@ -51,15 +47,11 @@ export async function GET(req) {
           },
         },
         include: {
+          vaccinations: true, // 👈 ADD THIS
           owners: {
             include: {
               owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                },
+                select: { id: true, name: true, email: true, phone: true },
               },
             },
           },

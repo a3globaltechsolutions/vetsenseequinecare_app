@@ -15,7 +15,8 @@
     "create-users": "node scripts/createUsers.js",
     "seed": "node scripts/seedDatabase.js",
     "db:stats": "node scripts/viewStats.js",
-    "db:reset": "node scripts/resetDatabase.js"
+    "db:reset": "node scripts/resetDatabase.js",
+    "assign-ownership": "node scripts/assignOwnership.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
