@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 // GET single horse
-export async function GET({ params }) {
+export async function GET(req, { params }) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -12,8 +12,11 @@ export async function GET({ params }) {
   }
 
   try {
+    // Await params in Next.js 15+
+    const { id } = await params;
+
     const horse = await prisma.horse.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         owners: {
           include: {
@@ -35,6 +38,13 @@ export async function GET({ params }) {
         },
         documents: {
           orderBy: { createdAt: "desc" },
+        },
+        _count: {
+          select: {
+            medicalRecords: true,
+            vaccinations: true,
+            documents: true,
+          },
         },
       },
     });
@@ -72,6 +82,8 @@ export async function PUT(req, { params }) {
   }
 
   try {
+    // Await params in Next.js 15+
+    const { id } = await params;
     const data = await req.json();
 
     // Check if microchip is being changed and if it already exists
@@ -79,7 +91,7 @@ export async function PUT(req, { params }) {
       const existing = await prisma.horse.findFirst({
         where: {
           microchip: data.microchip,
-          NOT: { id: params.id },
+          NOT: { id },
         },
       });
 
@@ -92,7 +104,7 @@ export async function PUT(req, { params }) {
     }
 
     const horse = await prisma.horse.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: data.name,
         breed: data.breed || null,
@@ -134,8 +146,11 @@ export async function DELETE(req, { params }) {
   }
 
   try {
+    // Await params in Next.js 15+
+    const { id } = await params;
+
     const horse = await prisma.horse.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { name: true },
     });
 
@@ -147,14 +162,14 @@ export async function DELETE(req, { params }) {
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        horseId: params.id,
+        horseId: id,
         action: "HORSE_DELETED",
         details: `Deleted horse profile: ${horse.name}`,
       },
     });
 
     await prisma.horse.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Horse deleted successfully" });

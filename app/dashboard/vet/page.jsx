@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 export default function VetDashboard() {
   const { data: session } = useSession();
@@ -24,7 +25,7 @@ export default function VetDashboard() {
       const data = await res.json();
       setHorses(data);
     } catch (error) {
-      console.error("Error fetching horses:", error);
+      toast.error("Error fetching horses:", error);
     } finally {
       setLoading(false);
     }
