@@ -24,6 +24,14 @@ export default function OwnersManagementPage() {
     try {
       const res = await fetch("/api/users/owners");
       const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        console.error("API returned an error or invalid data:", data);
+        toast.error(data.error || "Failed to load owners");
+        setOwners([]); // Prevents filter() crash
+        return;
+      }
+
       setOwners(data);
     } catch (error) {
       console.error("Error fetching owners:", error);
