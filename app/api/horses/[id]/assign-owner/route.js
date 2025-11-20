@@ -5,6 +5,9 @@ import { NextResponse } from "next/server";
 
 // POST - Assign owner to horse
 export async function POST(req, { params }) {
+  // ✅ AWAIT params first!
+  const { id: horseId } = await params;
+
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "VET") {
@@ -23,7 +26,7 @@ export async function POST(req, { params }) {
 
     // Check if horse exists
     const horse = await prisma.horse.findUnique({
-      where: { id: params.id },
+      where: { id: horseId }, // ✅ Use horseId variable
     });
 
     if (!horse) {
@@ -50,7 +53,7 @@ export async function POST(req, { params }) {
     const existingOwnership = await prisma.ownership.findUnique({
       where: {
         horseId_ownerId: {
-          horseId: params.id,
+          horseId: horseId, // ✅ Use horseId variable
           ownerId: ownerId,
         },
       },
@@ -66,7 +69,7 @@ export async function POST(req, { params }) {
     // Create ownership
     const ownership = await prisma.ownership.create({
       data: {
-        horseId: params.id,
+        horseId: horseId, // ✅ Use horseId variable
         ownerId: ownerId,
       },
       include: {
@@ -90,7 +93,7 @@ export async function POST(req, { params }) {
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        horseId: params.id,
+        horseId: horseId, // ✅ Use horseId variable
         action: "OWNER_ASSIGNED",
         details: `Assigned ${owner.name} as owner of ${horse.name}`,
       },
@@ -108,6 +111,9 @@ export async function POST(req, { params }) {
 
 // DELETE - Remove owner from horse
 export async function DELETE(req, { params }) {
+  // ✅ AWAIT params first!
+  const { id: horseId } = await params;
+
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "VET") {
@@ -129,7 +135,7 @@ export async function DELETE(req, { params }) {
     const ownership = await prisma.ownership.findUnique({
       where: {
         horseId_ownerId: {
-          horseId: params.id,
+          horseId: horseId, // ✅ Use horseId variable
           ownerId: ownerId,
         },
       },
@@ -149,7 +155,7 @@ export async function DELETE(req, { params }) {
     await prisma.ownership.delete({
       where: {
         horseId_ownerId: {
-          horseId: params.id,
+          horseId: horseId, // ✅ Use horseId variable
           ownerId: ownerId,
         },
       },
@@ -159,7 +165,7 @@ export async function DELETE(req, { params }) {
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        horseId: params.id,
+        horseId: horseId, // ✅ Use horseId variable
         action: "OWNER_REMOVED",
         details: `Removed ${ownership.owner.name} as owner of ${ownership.horse.name}`,
       },

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import AssignOwnerDialog from "@/components/AssignOwnerDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -112,6 +113,12 @@ export default function HorseDetailPage() {
           </div>
           {isVet && (
             <div className="flex gap-2">
+              <AssignOwnerDialog
+                horseId={horse.id}
+                currentOwners={horse.owners || []}
+                onSuccess={fetchHorse}
+              />
+
               <Link href={`/horses/${horse.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <svg
@@ -168,6 +175,7 @@ export default function HorseDetailPage() {
                     alt={horse.name}
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 </div>
               ) : (
