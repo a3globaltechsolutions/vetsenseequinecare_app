@@ -15,6 +15,7 @@ export default function VetDashboard() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const horsesPerPage = 6;
 
   useEffect(() => {
@@ -95,6 +96,11 @@ export default function VetDashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Get first letter of name
+  const getInitials = () => {
+    return session?.user?.name?.charAt(0).toUpperCase() || "V";
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -117,7 +123,9 @@ export default function VetDashboard() {
               <p className="text-xs text-gray-600">Veterinary Dashboard</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Desktop View - Show full info */}
+          <div className="hidden md:flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium">
                 {session?.user?.title}. {session?.user?.name}
@@ -129,6 +137,64 @@ export default function VetDashboard() {
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
+          </div>
+
+          {/* Mobile View - Hamburger Menu */}
+          <div className="md:hidden relative">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-10 h-10 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center hover:bg-purple-700 transition-colors"
+            >
+              {getInitials()}
+            </button>
+
+            {/* Mobile Dropdown Menu */}
+            {mobileMenuOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+
+                {/* Menu */}
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50 overflow-hidden">
+                  <div className="p-4 border-b bg-gray-50">
+                    <p className="text-sm font-medium text-gray-900">
+                      {session?.user?.title}. {session?.user?.name}
+                    </p>
+                    <Badge variant="secondary" className="text-xs mt-2">
+                      VET
+                    </Badge>
+                  </div>
+                  <div className="p-2">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleSignOut();
+                      }}
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                      Sign Out
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -145,24 +211,45 @@ export default function VetDashboard() {
           </p>
         </div>
         <div className="mb-4">
-          <Link href="/dashboard/vet/horses/new">
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Add New Horse
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/dashboard/vet/horses/new">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add New Horse
+              </Button>
+            </Link>
+
+            <Link href="/dashboard/vet/owners">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Manage Owners
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}

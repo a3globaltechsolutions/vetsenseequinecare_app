@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
   }
 
   try {
-    const { id } = await params;
+    const { id } = await params; // ✅ AWAIT params
     const owner = await prisma.user.findUnique({
       where: { id, role: "OWNER" },
       select: {
@@ -64,11 +64,12 @@ export async function PUT(req, { params }) {
   }
 
   try {
+    const { id } = await params; // ✅ AWAIT params first!
     const data = await req.json();
 
     // Check if owner exists
     const existingOwner = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id }, // ✅ Use the awaited id
     });
 
     if (!existingOwner || existingOwner.role !== "OWNER") {
@@ -81,7 +82,8 @@ export async function PUT(req, { params }) {
         where: { email: data.email },
       });
 
-      if (emailTaken) {
+      if (emailTaken && emailTaken.id !== id) {
+        // ✅ Also check it's not the same user
         return NextResponse.json(
           { error: "This email is already in use" },
           { status: 400 }
@@ -107,7 +109,7 @@ export async function PUT(req, { params }) {
 
     // Update owner
     const owner = await prisma.user.update({
-      where: { id: params.id },
+      where: { id }, // ✅ Use the awaited id
       data: updateData,
       select: {
         id: true,
@@ -150,8 +152,9 @@ export async function DELETE(req, { params }) {
   }
 
   try {
+    const { id } = await params; // ✅ AWAIT params first!
     const owner = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id }, // ✅ Use the awaited id
       select: {
         name: true,
         email: true,
@@ -187,7 +190,7 @@ export async function DELETE(req, { params }) {
 
     // Delete owner
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id }, // ✅ Use the awaited id
     });
 
     return NextResponse.json({ message: "Owner deleted successfully" });

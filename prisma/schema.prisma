@@ -13,6 +13,9 @@ model User {
   passwordHash String
   name         String
   phone        String?
+  address      String?
+  state        String?
+  country      String?       @default("Nigeria")
   role         Role          @default(OWNER)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
