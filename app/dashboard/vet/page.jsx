@@ -211,7 +211,7 @@ export default function VetDashboard() {
           </p>
         </div>
         <div className="mb-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/vet/horses/new">
               <Button className="bg-purple-600 hover:bg-purple-700">
                 <svg
