@@ -2,60 +2,69 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 
-// GET single owner
+// GET single horse
 export async function GET(req, { params }) {
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "VET") {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { id } = await params;
-    const owner = await prisma.user.findUnique({
-      where: { id, role: "OWNER" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        title: true,
-        address: true,
-        state: true,
-        country: true,
-        createdAt: true,
-        ownedHorses: {
+    const horse = await prisma.horse.findUnique({
+      where: { id },
+      include: {
+        owners: {
           include: {
-            horse: {
+            owner: {
               select: {
                 id: true,
                 name: true,
-                breed: true,
-                imageUrl: true,
+                email: true,
+                phone: true,
               },
             },
           },
         },
+        medicalRecords: {
+          orderBy: { recordDate: "desc" },
+        },
+        vaccinations: {
+          orderBy: { dateGiven: "desc" },
+        },
+        documents: {
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
-    if (!owner) {
-      return NextResponse.json({ error: "Owner not found" }, { status: 404 });
+    if (!horse) {
+      return NextResponse.json({ error: "Horse not found" }, { status: 404 });
     }
 
-    return NextResponse.json(owner);
+    // Check authorization (owners can only see their horses)
+    if (session.user.role === "OWNER") {
+      const isOwner = horse.owners.some(
+        (ownership) => ownership.ownerId === session.user.id
+      );
+      if (!isOwner) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
+    }
+
+    return NextResponse.json(horse);
   } catch (error) {
-    console.error("Error fetching owner:", error);
+    console.error("Error fetching horse:", error);
     return NextResponse.json(
-      { error: "Failed to fetch owner" },
+      { error: "Failed to fetch horse" },
       { status: 500 }
     );
   }
 }
 
-// PUT - Update owner
+// PUT - Update horse
 export async function PUT(req, { params }) {
   const session = await getServerSession(authOptions);
 
@@ -64,61 +73,37 @@ export async function PUT(req, { params }) {
   }
 
   try {
+    const { id } = await params;
     const data = await req.json();
 
-    // Check if owner exists
-    const existingOwner = await prisma.user.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!existingOwner || existingOwner.role !== "OWNER") {
-      return NextResponse.json({ error: "Owner not found" }, { status: 404 });
-    }
-
-    // Check if email is being changed and if it's already taken
-    if (data.email && data.email !== existingOwner.email) {
-      const emailTaken = await prisma.user.findUnique({
-        where: { email: data.email },
+    // Check if microchip is being changed and if it already exists
+    if (data.microchip) {
+      const existing = await prisma.horse.findFirst({
+        where: {
+          microchip: data.microchip,
+          NOT: { id },
+        },
       });
 
-      if (emailTaken) {
+      if (existing) {
         return NextResponse.json(
-          { error: "This email is already in use" },
+          { error: "A horse with this microchip already exists" },
           { status: 400 }
         );
       }
     }
 
-    // Prepare update data
-    const updateData = {
-      name: data.name,
-      email: data.email,
-      phone: data.phone || null,
-      title: data.title || null,
-      address: data.address || null,
-      state: data.state || null,
-      country: data.country || "Nigeria",
-    };
-
-    // If password is provided, hash it
-    if (data.password && data.password.trim() !== "") {
-      updateData.passwordHash = await bcrypt.hash(data.password, 10);
-    }
-
-    // Update owner
-    const owner = await prisma.user.update({
-      where: { id: params.id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        title: true,
-        address: true,
-        state: true,
-        country: true,
-        createdAt: true,
+    const horse = await prisma.horse.update({
+      where: { id },
+      data: {
+        name: data.name,
+        breed: data.breed || null,
+        age: data.age ? parseInt(data.age) : null,
+        color: data.color || null,
+        sex: data.sex || null,
+        microchip: data.microchip || null,
+        imageUrl: data.imageUrl || null,
+        status: data.status || "ACTIVE",
       },
     });
 
@@ -126,22 +111,23 @@ export async function PUT(req, { params }) {
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        action: "OWNER_UPDATED",
-        details: `Updated owner account: ${owner.name} (${owner.email})`,
+        horseId: horse.id,
+        action: "HORSE_UPDATED",
+        details: `Updated horse profile: ${horse.name}`,
       },
     });
 
-    return NextResponse.json(owner);
+    return NextResponse.json(horse);
   } catch (error) {
-    console.error("Error updating owner:", error);
+    console.error("Error updating horse:", error);
     return NextResponse.json(
-      { error: "Failed to update owner" },
+      { error: "Failed to update horse" },
       { status: 500 }
     );
   }
 }
 
-// DELETE owner
+// DELETE horse
 export async function DELETE(req, { params }) {
   const session = await getServerSession(authOptions);
 
@@ -150,51 +136,35 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const owner = await prisma.user.findUnique({
-      where: { id: params.id },
-      select: {
-        name: true,
-        email: true,
-        role: true,
-        _count: {
-          select: { ownedHorses: true },
-        },
-      },
+    const { id } = await params;
+    const horse = await prisma.horse.findUnique({
+      where: { id },
+      select: { name: true },
     });
 
-    if (!owner || owner.role !== "OWNER") {
-      return NextResponse.json({ error: "Owner not found" }, { status: 404 });
-    }
-
-    // Check if owner has horses
-    if (owner._count.ownedHorses > 0) {
-      return NextResponse.json(
-        {
-          error: `Cannot delete owner. ${owner.name} has ${owner._count.ownedHorses} horse(s) assigned. Please reassign or remove horses first.`,
-        },
-        { status: 400 }
-      );
+    if (!horse) {
+      return NextResponse.json({ error: "Horse not found" }, { status: 404 });
     }
 
     // Log activity before deletion
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        action: "OWNER_DELETED",
-        details: `Deleted owner account: ${owner.name} (${owner.email})`,
+        horseId: params.id,
+        action: "HORSE_DELETED",
+        details: `Deleted horse profile: ${horse.name}`,
       },
     });
 
-    // Delete owner
-    await prisma.user.delete({
-      where: { id: params.id },
+    await prisma.horse.delete({
+      where: { id },
     });
 
-    return NextResponse.json({ message: "Owner deleted successfully" });
+    return NextResponse.json({ message: "Horse deleted successfully" });
   } catch (error) {
-    console.error("Error deleting owner:", error);
+    console.error("Error deleting horse:", error);
     return NextResponse.json(
-      { error: "Failed to delete owner" },
+      { error: "Failed to delete horse" },
       { status: 500 }
     );
   }

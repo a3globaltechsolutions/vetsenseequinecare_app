@@ -5,6 +5,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -14,6 +24,7 @@ export default function OwnerDetailPage() {
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     fetchOwner();
@@ -39,14 +50,6 @@ export default function OwnerDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${owner.name}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
     setDeleting(true);
     try {
       const res = await fetch(`/api/users/owners/${params.id}`, {
@@ -66,6 +69,7 @@ export default function OwnerDetailPage() {
       toast.error("An error occurred");
     } finally {
       setDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -115,7 +119,7 @@ export default function OwnerDetailPage() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteDialog(true)}
               disabled={deleting}
             >
               {deleting ? "Deleting..." : "Delete"}
@@ -255,6 +259,107 @@ export default function OwnerDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <span className="break-words">
+                Delete {formatOwnerName(owner)}?
+              </span>
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <strong>{formatOwnerName(owner)}</strong>? This action cannot
+                  be undone.
+                </p>
+
+                {/* Warning about horses if they exist */}
+                {owner.ownedHorses && owner.ownedHorses.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                    <p className="font-semibold text-amber-900 mb-1">
+                      Important Notice:
+                    </p>
+                    <ul className="list-disc list-inside text-amber-800 space-y-1">
+                      <li>
+                        This owner has {owner.ownedHorses.length} horse
+                        {owner.ownedHorses.length !== 1 ? "s" : ""} assigned
+                      </li>
+                      <li>All horse assignments will be removed</li>
+                      <li>Horses themselves will not be deleted</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* General warning */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                  <p className="font-semibold text-red-900 mb-1">
+                    This will permanently delete:
+                  </p>
+                  <ul className="list-disc list-inside text-red-800 space-y-1">
+                    <li>Owner account and all personal information</li>
+                    <li>Login credentials</li>
+                    <li>Ownership history</li>
+                    <li>All associated data</li>
+                  </ul>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={deleting} className="m-0 sm:m-0">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+            >
+              {deleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete Owner
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

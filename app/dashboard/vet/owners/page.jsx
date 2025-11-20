@@ -103,7 +103,7 @@ export default function OwnersManagementPage() {
                 ← Back
               </Button>
             </Link>
-            <div>
+            <div className="hidden md:block">
               <h1 className="text-xl font-bold text-gray-900">
                 Owner Management
               </h1>
@@ -135,6 +135,10 @@ export default function OwnersManagementPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="md:hidden block mb-4">
+          <h1 className="text-xl font-bold text-gray-900">Owner Management</h1>
+          <p className="text-sm text-gray-600">Manage horse owner accounts</p>
+        </div>
         {/* Stats */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="p-6">

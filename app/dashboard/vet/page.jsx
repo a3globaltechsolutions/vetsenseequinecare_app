@@ -48,7 +48,7 @@ export default function VetDashboard() {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/" });
+    await signOut({ callbackUrl: "/auth/login" });
   };
 
   const getNextVaccination = (horse) => {
