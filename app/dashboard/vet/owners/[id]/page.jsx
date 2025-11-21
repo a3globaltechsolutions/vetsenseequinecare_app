@@ -103,7 +103,7 @@ export default function OwnerDetailPage() {
                 ← Back
               </Button>
             </Link>
-            <div>
+            <div className="hidden lg:block">
               <h1 className="text-xl font-bold text-gray-900">
                 {formatOwnerName(owner)}
               </h1>

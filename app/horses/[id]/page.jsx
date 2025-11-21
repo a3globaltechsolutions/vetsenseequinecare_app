@@ -220,7 +220,7 @@ export default function HorseDetailPage() {
                   ← Back
                 </Button>
               </Link>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 hidden md:block">
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                   {horse.name}
                 </h1>
@@ -381,6 +381,14 @@ export default function HorseDetailPage() {
       {/* Main Content - Better spacing for mobile */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="min-w-0 flex-1 md:hidden">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+              {horse.name}
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-600 truncate">
+              {horse.breed || "Unknown breed"}
+            </p>
+          </div>
           {/* Left Column - Horse Info */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <Card className="overflow-hidden">
@@ -548,7 +556,7 @@ export default function HorseDetailPage() {
                 <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
                   Horse Information
                 </h2>
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4">
                   <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg">
                     <p className="text-lg sm:text-2xl font-bold text-purple-600">
                       {horse.medicalRecords?.length || 0}
