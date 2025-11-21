@@ -210,28 +210,29 @@ export default function HorseDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link href={backUrl}>
-                <Button variant="outline" size="sm" className="shrink-0">
+      {/* Header - Fixed for better mobile experience */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Link href={backUrl} className="shrink-0">
+                <Button variant="outline" size="sm" className="h-9 px-3">
                   ← Back
                 </Button>
               </Link>
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl font-bold text-gray-900 truncate">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                   {horse.name}
                 </h1>
-                <p className="text-sm text-gray-600 truncate">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">
                   {horse.breed || "Unknown breed"}
                 </p>
               </div>
             </div>
             {isVet && (
-              <div className="flex flex-wrap gap-2 justify-end">
-                <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Desktop Actions */}
+                <div className="hidden sm:flex items-center gap-2">
                   <AssignOwnerDialog
                     horseId={horse.id}
                     currentOwners={horse.owners || []}
@@ -242,7 +243,7 @@ export default function HorseDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1 h-9"
                     >
                       <svg
                         className="w-4 h-4"
@@ -257,7 +258,7 @@ export default function HorseDetailPage() {
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      <span>Edit</span>
+                      <span className="hidden xs:inline">Edit</span>
                     </Button>
                   </Link>
 
@@ -265,7 +266,7 @@ export default function HorseDetailPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => setShowDeleteDialog(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1 h-9"
                   >
                     <svg
                       className="w-4 h-4"
@@ -280,14 +281,15 @@ export default function HorseDetailPage() {
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
-                    <span>Delete</span>
+                    <span className="hidden xs:inline">Delete</span>
                   </Button>
                 </div>
 
-                <div className="md:hidden relative">
+                {/* Mobile Menu */}
+                <div className="sm:hidden relative">
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="w-10 h-10 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center hover:bg-purple-700 transition-colors"
+                    className="w-8 h-8 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center hover:bg-purple-700 transition-colors text-sm"
                   >
                     {getInitials()}
                   </button>
@@ -298,16 +300,16 @@ export default function HorseDetailPage() {
                         className="fixed inset-0 z-40"
                         onClick={() => setMobileMenuOpen(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50 overflow-hidden">
-                        <div className="p-4 border-b bg-gray-50">
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50 overflow-hidden">
+                        <div className="p-3 border-b bg-gray-50">
                           <p className="text-sm font-medium text-gray-900">
                             Horse Actions
                           </p>
-                          <Badge variant="secondary" className="text-xs mt-2">
+                          <Badge variant="secondary" className="text-xs mt-1">
                             VET TOOLS
                           </Badge>
                         </div>
-                        <div className="p-2 space-y-1">
+                        <div className="p-1 space-y-1">
                           <div className="px-2 py-1">
                             <AssignOwnerDialog
                               horseId={horse.id}
@@ -321,7 +323,7 @@ export default function HorseDetailPage() {
                           >
                             <Button
                               variant="ghost"
-                              className="justify-start border w-full"
+                              className="justify-start border w-full text-sm h-9"
                               onClick={() => setMobileMenuOpen(false)}
                             >
                               <svg
@@ -343,7 +345,7 @@ export default function HorseDetailPage() {
                           <div className="px-2">
                             <Button
                               variant="ghost"
-                              className="border justify-start bg-red-600 text-white hover:text-red-700 hover:bg-red-50 w-full"
+                              className="border justify-start bg-red-600 text-white hover:text-red-700 hover:bg-red-50 w-full text-sm h-9"
                               onClick={() => {
                                 setMobileMenuOpen(false);
                                 setShowDeleteDialog(true);
@@ -376,14 +378,14 @@ export default function HorseDetailPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="md:col-span-1 space-y-6">
+      {/* Main Content - Better spacing for mobile */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Column - Horse Info */}
+          <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <Card className="overflow-hidden">
               {horse.imageUrl ? (
-                <div className="relative w-full h-64">
+                <div className="relative w-full h-48 sm:h-64">
                   <Image
                     src={horse.imageUrl}
                     alt={horse.name}
@@ -393,9 +395,9 @@ export default function HorseDetailPage() {
                   />
                 </div>
               ) : (
-                <div className="w-full h-64 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                <div className="w-full h-48 sm:h-64 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
                   <svg
-                    className="w-24 h-24 text-purple-300"
+                    className="w-16 h-16 sm:w-24 sm:h-24 text-purple-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -409,41 +411,56 @@ export default function HorseDetailPage() {
                   </svg>
                 </div>
               )}
-              <div className="p-4">
-                <div className="space-y-3">
+              <div className="p-3 sm:p-4">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Status
+                    </span>
                     <Badge
                       variant={
                         horse.status === "ACTIVE" ? "default" : "secondary"
                       }
+                      className="text-xs"
                     >
                       {horse.status}
                     </Badge>
                   </div>
                   {horse.age && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Age</span>
-                      <span className="font-medium">{horse.age} years</span>
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        Age
+                      </span>
+                      <span className="font-medium text-sm sm:text-base">
+                        {horse.age} years
+                      </span>
                     </div>
                   )}
                   {horse.color && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Color</span>
-                      <span className="font-medium">{horse.color}</span>
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        Color
+                      </span>
+                      <span className="font-medium text-sm sm:text-base">
+                        {horse.color}
+                      </span>
                     </div>
                   )}
                   {horse.sex && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Sex</span>
-                      <span className="font-medium capitalize">
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        Sex
+                      </span>
+                      <span className="font-medium text-sm sm:text-base capitalize">
                         {horse.sex.toLowerCase()}
                       </span>
                     </div>
                   )}
                   {horse.microchip && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Microchip</span>
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        Microchip
+                      </span>
                       <span className="font-mono text-xs">
                         {horse.microchip}
                       </span>
@@ -454,11 +471,13 @@ export default function HorseDetailPage() {
             </Card>
 
             {horse.owners && horse.owners.length > 0 && (
-              <Card className="p-4">
-                <h3 className="font-semibold mb-3">Owners</h3>
-                <div className="space-y-3">
+              <Card className="p-3 sm:p-4">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
+                  Owners
+                </h3>
+                <div className="space-y-2 sm:space-y-3">
                   {horse.owners.map((ownership) => (
-                    <div key={ownership.id} className="text-sm">
+                    <div key={ownership.id} className="text-xs sm:text-sm">
                       <p className="font-medium truncate">
                         {ownership.owner.name}
                       </p>
@@ -477,13 +496,13 @@ export default function HorseDetailPage() {
             )}
           </div>
 
-          {/* Right Column */}
-          <div className="md:col-span-2">
-            {/* Tabs - with horizontal scroll */}
-            <div className="flex gap-2 mb-6 border-b overflow-x-auto pb-px scrollbar-hide">
+          {/* Right Column - Content Area */}
+          <div className="lg:col-span-2">
+            {/* Tabs - Improved mobile scrolling */}
+            <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 border-b overflow-x-auto pb-px scrollbar-hide">
               <button
                 onClick={() => setActiveTab("overview")}
-                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 sm:px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 text-sm sm:text-base ${
                   activeTab === "overview"
                     ? "text-purple-600 border-b-2 border-purple-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -493,7 +512,7 @@ export default function HorseDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab("medical")}
-                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 sm:px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 text-sm sm:text-base ${
                   activeTab === "medical"
                     ? "text-purple-600 border-b-2 border-purple-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -503,7 +522,7 @@ export default function HorseDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab("vaccinations")}
-                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 sm:px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 text-sm sm:text-base ${
                   activeTab === "vaccinations"
                     ? "text-purple-600 border-b-2 border-purple-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -513,7 +532,7 @@ export default function HorseDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab("documents")}
-                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 sm:px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 text-sm sm:text-base ${
                   activeTab === "documents"
                     ? "text-purple-600 border-b-2 border-purple-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -526,48 +545,28 @@ export default function HorseDetailPage() {
             {/* Tab Content */}
             {activeTab === "overview" && (
               <Card className="p-4 sm:p-6">
-                <h2 className="text-xl sm:text-2xl font-bold mb-6">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
                   Horse Information
                 </h2>
-                {isVet && (
-                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                    <Link
-                      href={`/horses/${horse.id}/medical/new`}
-                      className="flex-1"
-                    >
-                      <Button className="bg-purple-600 hover:bg-purple-700 w-full">
-                        Add Medical Record
-                      </Button>
-                    </Link>
-                    <Link
-                      href={`/horses/${horse.id}/vaccinations/new`}
-                      className="flex-1"
-                    >
-                      <Button className="bg-blue-600 hover:bg-blue-700 w-full">
-                        Add Vaccination
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-                <div className="grid md:grid-cols-3 grid-cols-1 gap-3 sm:gap-4">
-                  <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xl sm:text-2xl font-bold text-purple-600">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg">
+                    <p className="text-lg sm:text-2xl font-bold text-purple-600">
                       {horse.medicalRecords?.length || 0}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600">
                       Medical Records
                     </p>
                   </div>
-                  <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xl sm:text-2xl font-bold text-blue-600">
+                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg">
+                    <p className="text-lg sm:text-2xl font-bold text-blue-600">
                       {horse.vaccinations?.length || 0}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600">
                       Vaccinations
                     </p>
                   </div>
-                  <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xl sm:text-2xl font-bold text-green-600">
+                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg">
+                    <p className="text-lg sm:text-2xl font-bold text-green-600">
                       {horse.documents?.length || 0}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600">
@@ -580,10 +579,13 @@ export default function HorseDetailPage() {
 
             {activeTab === "medical" && (
               <div>
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
                   {isVet && (
-                    <Link href={`/horses/${horse.id}/medical/new`}>
-                      <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
+                    <Link
+                      href={`/horses/${horse.id}/medical/new`}
+                      className="sm:shrink-0"
+                    >
+                      <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-sm h-9">
                         <svg
                           className="w-4 h-4 mr-2"
                           fill="none"
@@ -609,21 +611,21 @@ export default function HorseDetailPage() {
                       setMedicalSearchTerm(e.target.value);
                       setMedicalCurrentPage(1);
                     }}
-                    className="flex-1"
+                    className="flex-1 text-sm h-9"
                   />
                 </div>
 
                 {filteredMedicalRecords.length > 0 ? (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {paginatedMedicalRecords.map((record) => (
-                        <Card key={record.id} className="p-4 sm:p-6">
-                          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
-                            <div className="flex-1">
-                              <h3 className="font-bold text-lg mb-1">
+                        <Card key={record.id} className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-base sm:text-lg mb-1 truncate">
                                 {record.diagnosis}
                               </h3>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs sm:text-sm text-gray-600">
                                 {new Date(
                                   record.recordDate
                                 ).toLocaleDateString()}
@@ -638,10 +640,10 @@ export default function HorseDetailPage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full"
+                                    className="w-full text-xs h-8 sm:h-9 sm:text-sm"
                                   >
                                     <svg
-                                      className="w-4 h-4 mr-1"
+                                      className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -664,10 +666,10 @@ export default function HorseDetailPage() {
                                     setShowDeleteMedicalDialog(true);
                                   }}
                                   disabled={deletingMedical === record.id}
-                                  className="flex-1 sm:flex-none"
+                                  className="flex-1 sm:flex-none text-xs h-8 sm:h-9 sm:text-sm"
                                 >
                                   <svg
-                                    className="w-4 h-4 mr-1"
+                                    className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -684,37 +686,39 @@ export default function HorseDetailPage() {
                               </div>
                             )}
                           </div>
-                          <div className="space-y-3">
+                          <div className="space-y-2 sm:space-y-3">
                             <div>
-                              <p className="text-sm font-semibold text-gray-700">
+                              <p className="text-xs sm:text-sm font-semibold text-gray-700">
                                 Treatment
                               </p>
-                              <p className="text-gray-600">
+                              <p className="text-gray-600 text-xs sm:text-sm">
                                 {record.treatment}
                               </p>
                             </div>
                             {record.notes && (
                               <div>
-                                <p className="text-sm font-semibold text-gray-700">
+                                <p className="text-xs sm:text-sm font-semibold text-gray-700">
                                   Notes
                                 </p>
-                                <p className="text-gray-600">{record.notes}</p>
+                                <p className="text-gray-600 text-xs sm:text-sm">
+                                  {record.notes}
+                                </p>
                               </div>
                             )}
                             {record.attachments &&
                               record.attachments.length > 0 && (
                                 <div>
-                                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                                  <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                     Attachments
                                   </p>
-                                  <div className="flex gap-2 flex-wrap">
+                                  <div className="flex gap-1 sm:gap-2 flex-wrap">
                                     {record.attachments.map((url, index) => (
                                       <a
                                         key={index}
                                         href={url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-blue-600 hover:underline"
+                                        className="text-xs sm:text-sm text-blue-600 hover:underline"
                                       >
                                         Attachment {index + 1}
                                       </a>
@@ -728,7 +732,7 @@ export default function HorseDetailPage() {
                     </div>
 
                     {totalMedicalPages > 1 && (
-                      <div className="flex justify-center items-center gap-2 mt-6">
+                      <div className="flex justify-center items-center gap-2 mt-4 sm:mt-6">
                         <Button
                           variant="outline"
                           size="sm"
@@ -738,10 +742,11 @@ export default function HorseDetailPage() {
                             )
                           }
                           disabled={medicalCurrentPage === 1}
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-xs sm:text-sm text-gray-600">
                           Page {medicalCurrentPage} of {totalMedicalPages}
                         </span>
                         <Button
@@ -756,6 +761,7 @@ export default function HorseDetailPage() {
                             )
                           }
                           disabled={medicalCurrentPage === totalMedicalPages}
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
                         >
                           Next
                         </Button>
@@ -763,10 +769,10 @@ export default function HorseDetailPage() {
                     )}
                   </>
                 ) : (
-                  <Card className="p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Card className="p-6 sm:p-12 text-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                       <svg
-                        className="w-8 h-8 text-gray-400"
+                        className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -779,14 +785,16 @@ export default function HorseDetailPage() {
                         />
                       </svg>
                     </div>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">
                       {medicalSearchTerm
                         ? "No medical records found"
                         : "No medical records yet"}
                     </p>
                     {isVet && !medicalSearchTerm && (
                       <Link href={`/horses/${horse.id}/medical/new`}>
-                        <Button>Add First Record</Button>
+                        <Button className="text-sm h-9">
+                          Add First Record
+                        </Button>
                       </Link>
                     )}
                   </Card>
@@ -796,10 +804,13 @@ export default function HorseDetailPage() {
 
             {activeTab === "vaccinations" && (
               <div>
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
                   {isVet && (
-                    <Link href={`/horses/${horse.id}/vaccinations/new`}>
-                      <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+                    <Link
+                      href={`/horses/${horse.id}/vaccinations/new`}
+                      className="sm:shrink-0"
+                    >
+                      <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm h-9">
                         <svg
                           className="w-4 h-4 mr-2"
                           fill="none"
@@ -825,13 +836,13 @@ export default function HorseDetailPage() {
                       setVaccinationSearchTerm(e.target.value);
                       setVaccinationCurrentPage(1);
                     }}
-                    className="flex-1"
+                    className="flex-1 text-sm h-9"
                   />
                 </div>
 
                 {filteredVaccinations.length > 0 ? (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {paginatedVaccinations.map((vaccination) => {
                         const daysUntilDue = Math.ceil(
                           (new Date(vaccination.nextDue) - new Date()) /
@@ -842,13 +853,13 @@ export default function HorseDetailPage() {
                           daysUntilDue <= 30 && daysUntilDue >= 0;
 
                         return (
-                          <Card key={vaccination.id} className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
-                              <div className="flex-1">
-                                <h3 className="font-bold text-lg mb-1">
+                          <Card key={vaccination.id} className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-base sm:text-lg mb-1 truncate">
                                   {vaccination.vaccineName}
                                 </h3>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-xs sm:text-sm text-gray-600">
                                   Given:{" "}
                                   {new Date(
                                     vaccination.dateGiven
@@ -864,7 +875,7 @@ export default function HorseDetailPage() {
                                       ? "default"
                                       : "secondary"
                                   }
-                                  className="w-full sm:w-auto text-center"
+                                  className="w-full sm:w-auto text-center text-xs"
                                 >
                                   {isOverdue
                                     ? `Overdue ${Math.abs(daysUntilDue)} days`
@@ -883,10 +894,10 @@ export default function HorseDetailPage() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full"
+                                        className="w-full text-xs h-8 sm:h-9 sm:text-sm"
                                       >
                                         <svg
-                                          className="w-4 h-4 mr-1"
+                                          className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -911,10 +922,10 @@ export default function HorseDetailPage() {
                                       disabled={
                                         deletingVaccination === vaccination.id
                                       }
-                                      className="flex-1 sm:flex-none"
+                                      className="flex-1 sm:flex-none text-xs h-8 sm:h-9 sm:text-sm"
                                     >
                                       <svg
-                                        className="w-4 h-4 mr-1"
+                                        className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -933,7 +944,7 @@ export default function HorseDetailPage() {
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span className="text-gray-600">Next Due:</span>
                                 <span className="font-medium">
                                   {new Date(
@@ -942,7 +953,7 @@ export default function HorseDetailPage() {
                                 </span>
                               </div>
                               {vaccination.batchNumber && (
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs sm:text-sm">
                                   <span className="text-gray-600">
                                     Batch Number:
                                   </span>
@@ -952,11 +963,11 @@ export default function HorseDetailPage() {
                                 </div>
                               )}
                               {vaccination.notes && (
-                                <div className="mt-3">
-                                  <p className="text-sm font-semibold text-gray-700">
+                                <div className="mt-2 sm:mt-3">
+                                  <p className="text-xs sm:text-sm font-semibold text-gray-700">
                                     Notes
                                   </p>
-                                  <p className="text-gray-600 text-sm">
+                                  <p className="text-gray-600 text-xs sm:text-sm">
                                     {vaccination.notes}
                                   </p>
                                 </div>
@@ -968,7 +979,7 @@ export default function HorseDetailPage() {
                     </div>
 
                     {totalVaccinationPages > 1 && (
-                      <div className="flex justify-center items-center gap-2 mt-6">
+                      <div className="flex justify-center items-center gap-2 mt-4 sm:mt-6">
                         <Button
                           variant="outline"
                           size="sm"
@@ -978,10 +989,11 @@ export default function HorseDetailPage() {
                             )
                           }
                           disabled={vaccinationCurrentPage === 1}
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-xs sm:text-sm text-gray-600">
                           Page {vaccinationCurrentPage} of{" "}
                           {totalVaccinationPages}
                         </span>
@@ -999,6 +1011,7 @@ export default function HorseDetailPage() {
                           disabled={
                             vaccinationCurrentPage === totalVaccinationPages
                           }
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
                         >
                           Next
                         </Button>
@@ -1006,10 +1019,10 @@ export default function HorseDetailPage() {
                     )}
                   </>
                 ) : (
-                  <Card className="p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Card className="p-6 sm:p-12 text-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                       <svg
-                        className="w-8 h-8 text-gray-400"
+                        className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1022,14 +1035,16 @@ export default function HorseDetailPage() {
                         />
                       </svg>
                     </div>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">
                       {vaccinationSearchTerm
                         ? "No vaccinations found"
                         : "No vaccinations recorded yet"}
                     </p>
                     {isVet && !vaccinationSearchTerm && (
                       <Link href={`/horses/${horse.id}/vaccinations/new`}>
-                        <Button>Add First Vaccination</Button>
+                        <Button className="text-sm h-9">
+                          Add First Vaccination
+                        </Button>
                       </Link>
                     )}
                   </Card>
@@ -1038,10 +1053,10 @@ export default function HorseDetailPage() {
             )}
 
             {activeTab === "documents" && (
-              <Card className="p-12 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Card className="p-6 sm:p-12 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <svg
-                    className="w-8 h-8 text-gray-400"
+                    className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1054,10 +1069,10 @@ export default function HorseDetailPage() {
                     />
                   </svg>
                 </div>
-                <p className="text-gray-600 mb-2">
+                <p className="text-gray-600 text-sm sm:text-base mb-2">
                   Document generation coming in Phase 7
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500">
                   Generate passports, certificates, and reports
                 </p>
               </Card>
@@ -1268,6 +1283,12 @@ export default function HorseDetailPage() {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+
+        @media (max-width: 640px) {
+          .xs\\:inline {
+            display: inline !important;
+          }
         }
       `}</style>
     </div>
