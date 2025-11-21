@@ -80,7 +80,9 @@ export default function OwnerDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-medium">{session?.user?.name}</p>
+              <p className="text-sm font-medium">
+                {session?.user?.title}. {session?.user?.name}
+              </p>
               <Badge className="text-xs">OWNER</Badge>
             </div>
             <Button variant="outline" size="sm" onClick={handleSignOut}>
@@ -94,7 +96,7 @@ export default function OwnerDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome, {session?.user?.name}!
+            Welcome, {session?.user?.title}. {session?.user?.name}!
           </h2>
           <p className="text-gray-600">
             View your horses, medical records, and vaccination schedules.
