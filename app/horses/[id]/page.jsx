@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import AssignOwnerDialog from "@/components/AssignOwnerDialog";
 import {
   AlertDialog,
@@ -29,8 +30,25 @@ export default function HorseDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  // Get first letter of name
+  // Medical Records states
+  const [medicalSearchTerm, setMedicalSearchTerm] = useState("");
+  const [medicalCurrentPage, setMedicalCurrentPage] = useState(1);
+  const [deletingMedical, setDeletingMedical] = useState(null);
+  const [showDeleteMedicalDialog, setShowDeleteMedicalDialog] = useState(false);
+  const [medicalToDelete, setMedicalToDelete] = useState(null);
+
+  // Vaccination states
+  const [vaccinationSearchTerm, setVaccinationSearchTerm] = useState("");
+  const [vaccinationCurrentPage, setVaccinationCurrentPage] = useState(1);
+  const [deletingVaccination, setDeletingVaccination] = useState(null);
+  const [showDeleteVaccinationDialog, setShowDeleteVaccinationDialog] =
+    useState(false);
+  const [vaccinationToDelete, setVaccinationToDelete] = useState(null);
+
+  const itemsPerPage = 2;
+
   const getInitials = () => {
     return session?.user?.name?.charAt(0).toUpperCase() || " ";
   };
@@ -51,7 +69,6 @@ export default function HorseDetailPage() {
         router.push("/dashboard");
       }
     } catch (error) {
-      console.error("Error fetching horse:", error);
       toast.error("Failed to load horse");
     } finally {
       setLoading(false);
@@ -73,13 +90,105 @@ export default function HorseDetailPage() {
         toast.error(data.error || "Failed to delete horse");
       }
     } catch (error) {
-      console.error("Error deleting horse:", error);
       toast.error("An error occurred");
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
     }
   };
+
+  const handleDeleteMedical = async () => {
+    if (!medicalToDelete) return;
+    setDeletingMedical(medicalToDelete.id);
+    try {
+      const res = await fetch(
+        `/api/horses/${params.id}/medical/${medicalToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+        toast.success("Medical record deleted successfully");
+        fetchHorse();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete medical record");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setDeletingMedical(null);
+      setShowDeleteMedicalDialog(false);
+      setMedicalToDelete(null);
+    }
+  };
+
+  const handleDeleteVaccination = async () => {
+    if (!vaccinationToDelete) return;
+    setDeletingVaccination(vaccinationToDelete.id);
+    try {
+      const res = await fetch(
+        `/api/horses/${params.id}/vaccinations/${vaccinationToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+        toast.success("Vaccination deleted successfully");
+        fetchHorse();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete vaccination");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setDeletingVaccination(null);
+      setShowDeleteVaccinationDialog(false);
+      setVaccinationToDelete(null);
+    }
+  };
+
+  // Filter and paginate medical records
+  const filteredMedicalRecords =
+    horse?.medicalRecords?.filter(
+      (record) =>
+        record.diagnosis
+          .toLowerCase()
+          .includes(medicalSearchTerm.toLowerCase()) ||
+        record.treatment.toLowerCase().includes(medicalSearchTerm.toLowerCase())
+    ) || [];
+
+  const totalMedicalPages = Math.ceil(
+    filteredMedicalRecords.length / itemsPerPage
+  );
+  const paginatedMedicalRecords = filteredMedicalRecords.slice(
+    (medicalCurrentPage - 1) * itemsPerPage,
+    medicalCurrentPage * itemsPerPage
+  );
+
+  // Filter and paginate vaccinations
+  const filteredVaccinations =
+    horse?.vaccinations?.filter(
+      (vaccination) =>
+        vaccination.vaccineName
+          .toLowerCase()
+          .includes(vaccinationSearchTerm.toLowerCase()) ||
+        (vaccination.batchNumber &&
+          vaccination.batchNumber
+            .toLowerCase()
+            .includes(vaccinationSearchTerm.toLowerCase()))
+    ) || [];
+
+  const totalVaccinationPages = Math.ceil(
+    filteredVaccinations.length / itemsPerPage
+  );
+  const paginatedVaccinations = filteredVaccinations.slice(
+    (vaccinationCurrentPage - 1) * itemsPerPage,
+    vaccinationCurrentPage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -122,7 +231,6 @@ export default function HorseDetailPage() {
             </div>
             {isVet && (
               <div className="flex flex-wrap gap-2 justify-end">
-                {/* Desktop View - Show full buttons */}
                 <div className="hidden md:flex items-center gap-2">
                   <AssignOwnerDialog
                     horseId={horse.id}
@@ -134,10 +242,10 @@ export default function HorseDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex items-center gap-1 sm:gap-2 justify-center min-w-0"
+                      className="flex items-center gap-2"
                     >
                       <svg
-                        className="w-4 h-4 shrink-0"
+                        className="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -149,7 +257,7 @@ export default function HorseDetailPage() {
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      <span className="truncate">Edit</span>
+                      <span>Edit</span>
                     </Button>
                   </Link>
 
@@ -157,10 +265,10 @@ export default function HorseDetailPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => setShowDeleteDialog(true)}
-                    className="flex items-center gap-1 sm:gap-2 justify-center min-w-0"
+                    className="flex items-center gap-2"
                   >
                     <svg
-                      className="w-4 h-4 shrink-0"
+                      className="w-4 h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -172,11 +280,10 @@ export default function HorseDetailPage() {
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
-                    <span className="truncate">Delete</span>
+                    <span>Delete</span>
                   </Button>
                 </div>
 
-                {/* Mobile View - Hamburger Menu with action buttons */}
                 <div className="md:hidden relative">
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -185,16 +292,12 @@ export default function HorseDetailPage() {
                     {getInitials()}
                   </button>
 
-                  {/* Mobile Dropdown Menu */}
                   {mobileMenuOpen && (
                     <>
-                      {/* Backdrop */}
                       <div
                         className="fixed inset-0 z-40"
                         onClick={() => setMobileMenuOpen(false)}
                       />
-
-                      {/* Menu */}
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50 overflow-hidden">
                         <div className="p-4 border-b bg-gray-50">
                           <p className="text-sm font-medium text-gray-900">
@@ -204,9 +307,7 @@ export default function HorseDetailPage() {
                             VET TOOLS
                           </Badge>
                         </div>
-
                         <div className="p-2 space-y-1">
-                          {/* Assign Owner in dropdown */}
                           <div className="px-2 py-1">
                             <AssignOwnerDialog
                               horseId={horse.id}
@@ -214,15 +315,13 @@ export default function HorseDetailPage() {
                               onSuccess={fetchHorse}
                             />
                           </div>
-
-                          {/* Edit Button */}
                           <Link
                             href={`/horses/${horse.id}/edit`}
                             className="block px-2"
                           >
                             <Button
                               variant="ghost"
-                              className="justify-start border"
+                              className="justify-start border w-full"
                               onClick={() => setMobileMenuOpen(false)}
                             >
                               <svg
@@ -241,31 +340,31 @@ export default function HorseDetailPage() {
                               Edit Horse
                             </Button>
                           </Link>
-
-                          {/* Delete Button */}
-                          <Button
-                            variant="ghost"
-                            className="border justify-start bg-red-600 text-white hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              setMobileMenuOpen(false);
-                              setShowDeleteDialog(true);
-                            }}
-                          >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                          <div className="px-2">
+                            <Button
+                              variant="ghost"
+                              className="border justify-start bg-red-600 text-white hover:text-red-700 hover:bg-red-50 w-full"
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                setShowDeleteDialog(true);
+                              }}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                            Delete Horse
-                          </Button>
+                              <svg
+                                className="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                              Delete Horse
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -280,7 +379,7 @@ export default function HorseDetailPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Left Column - Horse Image & Basic Info */}
+          {/* Left Column */}
           <div className="md:col-span-1 space-y-6">
             <Card className="overflow-hidden">
               {horse.imageUrl ? (
@@ -354,7 +453,6 @@ export default function HorseDetailPage() {
               </div>
             </Card>
 
-            {/* Owners */}
             {horse.owners && horse.owners.length > 0 && (
               <Card className="p-4">
                 <h3 className="font-semibold mb-3">Owners</h3>
@@ -379,27 +477,79 @@ export default function HorseDetailPage() {
             )}
           </div>
 
-          {/* Right Column - Tabs Content */}
+          {/* Right Column */}
           <div className="md:col-span-2">
-            <Card className="p-4 sm:p-6">
-              <h2 className="text-xl sm:text-2xl font-bold mb-6">
-                Horse Information
-              </h2>
+            {/* Tabs - with horizontal scroll */}
+            <div className="flex gap-2 mb-6 border-b overflow-x-auto pb-px scrollbar-hide">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "overview"
+                    ? "text-purple-600 border-b-2 border-purple-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("medical")}
+                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "medical"
+                    ? "text-purple-600 border-b-2 border-purple-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Medical ({horse.medicalRecords?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab("vaccinations")}
+                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "vaccinations"
+                    ? "text-purple-600 border-b-2 border-purple-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Vaccinations ({horse.vaccinations?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab("documents")}
+                className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "documents"
+                    ? "text-purple-600 border-b-2 border-purple-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Documents ({horse.documents?.length || 0})
+              </button>
+            </div>
 
-              {/* Placeholder for Phase 6 */}
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-900 mb-2">
-                    Coming in Phase 6
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Medical records and vaccination tracking will be available
-                    soon.
-                  </p>
-                </div>
-
-                {/* Stats - Always 3 columns */}
-                <div className="grid md:grid-cols-3 grid-col-1 gap-3 sm:gap-4">
+            {/* Tab Content */}
+            {activeTab === "overview" && (
+              <Card className="p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-6">
+                  Horse Information
+                </h2>
+                {isVet && (
+                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <Link
+                      href={`/horses/${horse.id}/medical/new`}
+                      className="flex-1"
+                    >
+                      <Button className="bg-purple-600 hover:bg-purple-700 w-full">
+                        Add Medical Record
+                      </Button>
+                    </Link>
+                    <Link
+                      href={`/horses/${horse.id}/vaccinations/new`}
+                      className="flex-1"
+                    >
+                      <Button className="bg-blue-600 hover:bg-blue-700 w-full">
+                        Add Vaccination
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+                <div className="grid md:grid-cols-3 grid-cols-1 gap-3 sm:gap-4">
                   <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
                     <p className="text-xl sm:text-2xl font-bold text-purple-600">
                       {horse.medicalRecords?.length || 0}
@@ -425,13 +575,498 @@ export default function HorseDetailPage() {
                     </p>
                   </div>
                 </div>
+              </Card>
+            )}
+
+            {activeTab === "medical" && (
+              <div>
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  {isVet && (
+                    <Link href={`/horses/${horse.id}/medical/new`}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Add Medical Record
+                      </Button>
+                    </Link>
+                  )}
+                  <Input
+                    type="text"
+                    placeholder="Search medical records..."
+                    value={medicalSearchTerm}
+                    onChange={(e) => {
+                      setMedicalSearchTerm(e.target.value);
+                      setMedicalCurrentPage(1);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+
+                {filteredMedicalRecords.length > 0 ? (
+                  <>
+                    <div className="space-y-4">
+                      {paginatedMedicalRecords.map((record) => (
+                        <Card key={record.id} className="p-4 sm:p-6">
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+                            <div className="flex-1">
+                              <h3 className="font-bold text-lg mb-1">
+                                {record.diagnosis}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {new Date(
+                                  record.recordDate
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
+                            {isVet && (
+                              <div className="flex gap-2 w-full sm:w-auto">
+                                <Link
+                                  href={`/horses/${horse.id}/medical/${record.id}/edit`}
+                                  className="flex-1 sm:flex-none"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    <svg
+                                      className="w-4 h-4 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+                                    Edit
+                                  </Button>
+                                </Link>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setMedicalToDelete(record);
+                                    setShowDeleteMedicalDialog(true);
+                                  }}
+                                  disabled={deletingMedical === record.id}
+                                  className="flex-1 sm:flex-none"
+                                >
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">
+                                Treatment
+                              </p>
+                              <p className="text-gray-600">
+                                {record.treatment}
+                              </p>
+                            </div>
+                            {record.notes && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700">
+                                  Notes
+                                </p>
+                                <p className="text-gray-600">{record.notes}</p>
+                              </div>
+                            )}
+                            {record.attachments &&
+                              record.attachments.length > 0 && (
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                                    Attachments
+                                  </p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {record.attachments.map((url, index) => (
+                                      <a
+                                        key={index}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-blue-600 hover:underline"
+                                      >
+                                        Attachment {index + 1}
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {totalMedicalPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setMedicalCurrentPage(
+                              Math.max(1, medicalCurrentPage - 1)
+                            )
+                          }
+                          disabled={medicalCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Page {medicalCurrentPage} of {totalMedicalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setMedicalCurrentPage(
+                              Math.min(
+                                totalMedicalPages,
+                                medicalCurrentPage + 1
+                              )
+                            )
+                          }
+                          disabled={medicalCurrentPage === totalMedicalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Card className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg
+                        className="w-8 h-8 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      {medicalSearchTerm
+                        ? "No medical records found"
+                        : "No medical records yet"}
+                    </p>
+                    {isVet && !medicalSearchTerm && (
+                      <Link href={`/horses/${horse.id}/medical/new`}>
+                        <Button>Add First Record</Button>
+                      </Link>
+                    )}
+                  </Card>
+                )}
               </div>
-            </Card>
+            )}
+
+            {activeTab === "vaccinations" && (
+              <div>
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  {isVet && (
+                    <Link href={`/horses/${horse.id}/vaccinations/new`}>
+                      <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Add Vaccination
+                      </Button>
+                    </Link>
+                  )}
+                  <Input
+                    type="text"
+                    placeholder="Search vaccinations..."
+                    value={vaccinationSearchTerm}
+                    onChange={(e) => {
+                      setVaccinationSearchTerm(e.target.value);
+                      setVaccinationCurrentPage(1);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+
+                {filteredVaccinations.length > 0 ? (
+                  <>
+                    <div className="space-y-4">
+                      {paginatedVaccinations.map((vaccination) => {
+                        const daysUntilDue = Math.ceil(
+                          (new Date(vaccination.nextDue) - new Date()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        const isOverdue = daysUntilDue < 0;
+                        const isDueSoon =
+                          daysUntilDue <= 30 && daysUntilDue >= 0;
+
+                        return (
+                          <Card key={vaccination.id} className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+                              <div className="flex-1">
+                                <h3 className="font-bold text-lg mb-1">
+                                  {vaccination.vaccineName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Given:{" "}
+                                  {new Date(
+                                    vaccination.dateGiven
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                                <Badge
+                                  variant={
+                                    isOverdue
+                                      ? "destructive"
+                                      : isDueSoon
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className="w-full sm:w-auto text-center"
+                                >
+                                  {isOverdue
+                                    ? `Overdue ${Math.abs(daysUntilDue)} days`
+                                    : isDueSoon
+                                    ? `Due in ${daysUntilDue} days`
+                                    : `Due ${new Date(
+                                        vaccination.nextDue
+                                      ).toLocaleDateString()}`}
+                                </Badge>
+                                {isVet && (
+                                  <div className="flex gap-2 w-full sm:w-auto">
+                                    <Link
+                                      href={`/horses/${horse.id}/vaccinations/${vaccination.id}/edit`}
+                                      className="flex-1 sm:flex-none"
+                                    >
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                      >
+                                        <svg
+                                          className="w-4 h-4 mr-1"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                          />
+                                        </svg>
+                                        Edit
+                                      </Button>
+                                    </Link>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => {
+                                        setVaccinationToDelete(vaccination);
+                                        setShowDeleteVaccinationDialog(true);
+                                      }}
+                                      disabled={
+                                        deletingVaccination === vaccination.id
+                                      }
+                                      className="flex-1 sm:flex-none"
+                                    >
+                                      <svg
+                                        className="w-4 h-4 mr-1"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                        />
+                                      </svg>
+                                      Delete
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Next Due:</span>
+                                <span className="font-medium">
+                                  {new Date(
+                                    vaccination.nextDue
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {vaccination.batchNumber && (
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">
+                                    Batch Number:
+                                  </span>
+                                  <span className="font-medium font-mono">
+                                    {vaccination.batchNumber}
+                                  </span>
+                                </div>
+                              )}
+                              {vaccination.notes && (
+                                <div className="mt-3">
+                                  <p className="text-sm font-semibold text-gray-700">
+                                    Notes
+                                  </p>
+                                  <p className="text-gray-600 text-sm">
+                                    {vaccination.notes}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+
+                    {totalVaccinationPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setVaccinationCurrentPage(
+                              Math.max(1, vaccinationCurrentPage - 1)
+                            )
+                          }
+                          disabled={vaccinationCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Page {vaccinationCurrentPage} of{" "}
+                          {totalVaccinationPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setVaccinationCurrentPage(
+                              Math.min(
+                                totalVaccinationPages,
+                                vaccinationCurrentPage + 1
+                              )
+                            )
+                          }
+                          disabled={
+                            vaccinationCurrentPage === totalVaccinationPages
+                          }
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Card className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg
+                        className="w-8 h-8 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      {vaccinationSearchTerm
+                        ? "No vaccinations found"
+                        : "No vaccinations recorded yet"}
+                    </p>
+                    {isVet && !vaccinationSearchTerm && (
+                      <Link href={`/horses/${horse.id}/vaccinations/new`}>
+                        <Button>Add First Vaccination</Button>
+                      </Link>
+                    )}
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {activeTab === "documents" && (
+              <Card className="p-12 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-600 mb-2">
+                  Document generation coming in Phase 7
+                </p>
+                <p className="text-sm text-gray-500">
+                  Generate passports, certificates, and reports
+                </p>
+              </Card>
+            )}
           </div>
         </div>
       </main>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Horse Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
           <AlertDialogHeader>
@@ -513,6 +1148,128 @@ export default function HorseDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Medical Record Dialog */}
+      <AlertDialog
+        open={showDeleteMedicalDialog}
+        onOpenChange={setShowDeleteMedicalDialog}
+      >
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <span className="break-words">Delete Medical Record?</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the medical record for{" "}
+              <strong>{medicalToDelete?.diagnosis}</strong>? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel
+              disabled={!!deletingMedical}
+              className="m-0 sm:m-0"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMedical}
+              disabled={!!deletingMedical}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+            >
+              {deletingMedical ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Record"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Vaccination Dialog */}
+      <AlertDialog
+        open={showDeleteVaccinationDialog}
+        onOpenChange={setShowDeleteVaccinationDialog}
+      >
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <span className="break-words">Delete Vaccination?</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the vaccination for{" "}
+              <strong>{vaccinationToDelete?.vaccineName}</strong>? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel
+              disabled={!!deletingVaccination}
+              className="m-0 sm:m-0"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteVaccination}
+              disabled={!!deletingVaccination}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+            >
+              {deletingVaccination ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Vaccination"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }
