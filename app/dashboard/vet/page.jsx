@@ -134,6 +134,9 @@ export default function VetDashboard() {
                 VET
               </Badge>
             </div>
+            <Link href={`/dashboard/vet/users/${session?.user?.id}`}>
+              <Button size="sm">Profile</Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
@@ -166,6 +169,33 @@ export default function VetDashboard() {
                     <Badge variant="secondary" className="text-xs mt-2">
                       VET
                     </Badge>
+                  </div>
+                  <div className="p-2">
+                    <Link
+                      href={`/dashboard/vet/users/${session?.user?.id}`}
+                      className="block"
+                    >
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start hover:bg-gray-50"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                        Profile
+                      </Button>
+                    </Link>
                   </div>
                   <div className="p-2">
                     <Button
@@ -247,6 +277,25 @@ export default function VetDashboard() {
                   />
                 </svg>
                 Manage Owners
+              </Button>
+            </Link>
+
+            <Link href="/dashboard/vet/users">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                See All Users
               </Button>
             </Link>
           </div>
