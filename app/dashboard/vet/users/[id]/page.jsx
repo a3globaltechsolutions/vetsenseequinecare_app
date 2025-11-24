@@ -69,7 +69,7 @@ export default function VetUserDetailsPage({ params }) {
                   <ArrowLeft className="w-4 h-4 mr-1" /> Back
                 </Button>
               </Link>
-              <div>
+              <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-gray-900">
                   User Details
                 </h1>
@@ -79,7 +79,7 @@ export default function VetUserDetailsPage({ params }) {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col md:flex-row gap-3">
               <Link href={`/dashboard/vet/users/${userId}/edit`}>
                 <Button variant="outline" size="sm">
                   <Edit className="w-4 h-4 mr-1" /> Edit

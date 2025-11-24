@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -46,6 +47,9 @@ export default function HorseDetailPage() {
   const [showDeleteVaccinationDialog, setShowDeleteVaccinationDialog] =
     useState(false);
   const [vaccinationToDelete, setVaccinationToDelete] = useState(null);
+  const [generatingPassport, setGeneratingPassport] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   const itemsPerPage = 2;
 
@@ -55,8 +59,16 @@ export default function HorseDetailPage() {
 
   useEffect(() => {
     fetchHorse();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+    if (activeTab === "documents") {
+      fetchDocuments();
+    }
+  }, [activeTab, params.id]);
+
+  // useEffect(() => {
+  //   if (activeTab === "documents") {
+  //     fetchDocuments();
+  //   }
+  // }, [activeTab, params.id]);
 
   const fetchHorse = async () => {
     try {
@@ -151,6 +163,89 @@ export default function HorseDetailPage() {
     }
   };
 
+  const fetchDocuments = async () => {
+    setLoadingDocuments(true);
+    try {
+      const res = await fetch(`/api/horses/${params.id}/documents`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(data);
+      }
+    } catch (error) {
+      toast.error("Error fetching documents");
+      console.error("Error fetching documents:", error);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleGeneratePassport = async () => {
+    setGeneratingPassport(true);
+
+    try {
+      const res = await fetch(`/api/horses/${params.id}/generate-passport`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success(`Passport generated: ${data.passportNo}`);
+        window.open(data.downloadUrl, "_blank");
+        fetchHorse(); // Refresh horse data
+        fetchDocuments(); // ADD THIS LINE - Refresh documents
+      } else {
+        toast.error(data.error || "Failed to generate passport");
+      }
+    } catch (error) {
+      toast.error("Error generating passport");
+      console.error(error);
+    } finally {
+      setGeneratingPassport(false);
+    }
+  };
+
+  // Add this function in your HorseDetailPage component:
+  const handleDownloadDocument = async (doc) => {
+    try {
+      const response = await fetch(doc.fileUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${doc.passportNo || "document"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Document downloaded successfully");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download document");
+    }
+  };
+
+  // Then update your button:
+  <Button
+    onClick={() => handleDownloadDocument(doc)}
+    className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
+  >
+    <svg
+      className="w-4 h-4 mr-2"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+    Download PDF
+  </Button>;
+
   // Filter and paginate medical records
   const filteredMedicalRecords =
     horse?.medicalRecords?.filter(
@@ -233,6 +328,37 @@ export default function HorseDetailPage() {
               <div className="flex items-center gap-2 shrink-0">
                 {/* Desktop Actions */}
                 <div className="hidden sm:flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleGeneratePassport}
+                    disabled={generatingPassport}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {generatingPassport ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Generate Passport
+                      </>
+                    )}
+                  </Button>
+
                   <AssignOwnerDialog
                     horseId={horse.id}
                     currentOwners={horse.owners || []}
@@ -310,6 +436,37 @@ export default function HorseDetailPage() {
                           </Badge>
                         </div>
                         <div className="p-1 space-y-1">
+                          <div className="px-2">
+                            <Button
+                              onClick={handleGeneratePassport}
+                              disabled={generatingPassport}
+                              className="justify-start bg-green-600 hover:bg-green-700 w-full text-sm h-9"
+                            >
+                              {generatingPassport ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                  </svg>
+                                  Generate Passport
+                                </>
+                              )}
+                            </Button>
+                          </div>
                           <div className="px-2 py-1">
                             <AssignOwnerDialog
                               horseId={horse.id}
@@ -1061,29 +1218,178 @@ export default function HorseDetailPage() {
             )}
 
             {activeTab === "documents" && (
-              <Card className="p-6 sm:p-12 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <svg
-                    className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-gray-600 text-sm sm:text-base mb-2">
-                  Document generation coming in Phase 7
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  Generate passports, certificates, and reports
-                </p>
-              </Card>
+              <div>
+                {isVet && (
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
+                    <Button
+                      onClick={handleGeneratePassport}
+                      disabled={generatingPassport}
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-sm h-9"
+                    >
+                      {generatingPassport ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Generate New Passport
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {loadingDocuments ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading documents...</p>
+                  </div>
+                ) : documents.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {documents.map((doc) => (
+                      <Card key={doc.id} className="p-4 sm:p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 min-w-0">
+                            <Badge className="mb-2">{doc.type}</Badge>
+                            {doc.passportNo && (
+                              <p className="text-sm sm:text-base font-semibold text-purple-600 truncate">
+                                {doc.passportNo}
+                              </p>
+                            )}
+                          </div>
+                          <div className="ml-4 shrink-0">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            Generated:{" "}
+                            {new Date(doc.createdAt).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Document ID: {doc.id.slice(0, 8)}...
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            Download PDF
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              window.open(`/verify/${doc.id}`, "_blank")
+                            }
+                            className="flex-1 text-sm h-9"
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            Verify
+                          </Button>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-gray-50 rounded">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Digital Fingerprint:
+                          </p>
+                          <p className="text-xs font-mono text-gray-500 break-all">
+                            {doc.fingerprint.slice(0, 32)}...
+                          </p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-6 sm:p-12 text-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <svg
+                        className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-600 text-sm sm:text-base mb-2">
+                      No documents generated yet
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500 mb-4">
+                      Generate passports and certificates for this horse
+                    </p>
+                    {isVet && (
+                      <Button
+                        onClick={handleGeneratePassport}
+                        disabled={generatingPassport}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Generate First Passport
+                      </Button>
+                    )}
+                  </Card>
+                )}
+              </div>
             )}
           </div>
         </div>

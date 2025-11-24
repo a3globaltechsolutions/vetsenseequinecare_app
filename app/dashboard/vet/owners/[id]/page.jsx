@@ -325,7 +325,11 @@ export default function OwnerDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-            <AlertDialogCancel disabled={deleting} className="m-0 sm:m-0">
+            <AlertDialogCancel
+              disabled={deleting}
+              className="m-0 sm:m-0"
+              onClick={() => setShowDeleteDialog(false)}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

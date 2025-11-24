@@ -298,6 +298,25 @@ export default function VetDashboard() {
                 See All Users
               </Button>
             </Link>
+
+            <Link href="/dashboard/vet/seals">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Generate Seal
+              </Button>
+            </Link>
           </div>
         </div>
 

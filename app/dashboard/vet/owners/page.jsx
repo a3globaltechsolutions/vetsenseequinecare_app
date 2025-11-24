@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 
 export default function OwnersManagementPage() {
@@ -14,6 +24,9 @@ export default function OwnersManagementPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [ownerToDelete, setOwnerToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const ownersPerPage = 6;
 
   useEffect(() => {
@@ -41,17 +54,17 @@ export default function OwnersManagementPage() {
     }
   };
 
-  const handleDelete = async (owner) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${owner.name}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const confirmDelete = (owner) => {
+    setOwnerToDelete(owner);
+    setShowDeleteDialog(true);
+  };
 
+  const handleDelete = async () => {
+    if (!ownerToDelete) return;
+
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/users/owners/${owner.id}`, {
+      const res = await fetch(`/api/users/owners/${ownerToDelete.id}`, {
         method: "DELETE",
       });
 
@@ -66,6 +79,10 @@ export default function OwnersManagementPage() {
     } catch (error) {
       console.error("Error deleting owner:", error);
       toast.error("An error occurred");
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+      setOwnerToDelete(null);
     }
   };
 
@@ -371,7 +388,7 @@ export default function OwnersManagementPage() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDelete(owner)}
+                      onClick={() => confirmDelete(owner)}
                     >
                       <svg
                         className="w-4 h-4"
@@ -472,6 +489,99 @@ export default function OwnersManagementPage() {
           </>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <span className="break-words">Delete {ownerToDelete?.name}?</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <strong>{formatOwnerName(ownerToDelete || {})}</strong>? This
+                  action cannot be undone.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                  <p className="font-semibold text-amber-900 mb-1">
+                    This will permanently delete:
+                  </p>
+                  <ul className="list-disc list-inside text-amber-800 space-y-1">
+                    <li>Owner account and profile</li>
+                    <li>All associated contact information</li>
+                    <li>
+                      Ownership records for{" "}
+                      {ownerToDelete?._count?.ownedHorses || 0} horse
+                      {ownerToDelete?._count?.ownedHorses !== 1 ? "s" : ""}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel
+              disabled={deleting}
+              className="m-0 sm:m-0"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setOwnerToDelete(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+            >
+              {deleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete Owner
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

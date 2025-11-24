@@ -69,7 +69,7 @@ const OwnerProfile = () => {
                   <ArrowLeft className="w-4 h-4 mr-1" /> Back
                 </Button>
               </Link>
-              <div>
+              <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
                 <p className="text-sm text-gray-600">
                   {user.title}. {user.name}
