@@ -31,6 +31,13 @@ export async function POST(req, context) {
       include: {
         owners: {
           include: { owner: true },
+          orderBy: { startDate: "desc" },
+        },
+        vaccinations: {
+          orderBy: { dateGiven: "desc" },
+        },
+        medicalRecords: {
+          orderBy: { recordDate: "desc" },
         },
       },
     });

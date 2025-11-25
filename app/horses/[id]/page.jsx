@@ -47,9 +47,13 @@ export default function HorseDetailPage() {
   const [showDeleteVaccinationDialog, setShowDeleteVaccinationDialog] =
     useState(false);
   const [vaccinationToDelete, setVaccinationToDelete] = useState(null);
+
+  // Document states
   const [generatingPassport, setGeneratingPassport] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [documentsSearchTerm, setDocumentsSearchTerm] = useState("");
+  const [documentsCurrentPage, setDocumentsCurrentPage] = useState(1);
 
   const itemsPerPage = 2;
 
@@ -63,12 +67,6 @@ export default function HorseDetailPage() {
       fetchDocuments();
     }
   }, [activeTab, params.id]);
-
-  // useEffect(() => {
-  //   if (activeTab === "documents") {
-  //     fetchDocuments();
-  //   }
-  // }, [activeTab, params.id]);
 
   const fetchHorse = async () => {
     try {
@@ -193,7 +191,7 @@ export default function HorseDetailPage() {
         toast.success(`Passport generated: ${data.passportNo}`);
         window.open(data.downloadUrl, "_blank");
         fetchHorse(); // Refresh horse data
-        fetchDocuments(); // ADD THIS LINE - Refresh documents
+        fetchDocuments(); // Refresh documents
       } else {
         toast.error(data.error || "Failed to generate passport");
       }
@@ -205,7 +203,6 @@ export default function HorseDetailPage() {
     }
   };
 
-  // Add this function in your HorseDetailPage component:
   const handleDownloadDocument = async (doc) => {
     try {
       const response = await fetch(doc.fileUrl);
@@ -224,27 +221,6 @@ export default function HorseDetailPage() {
       toast.error("Failed to download document");
     }
   };
-
-  // Then update your button:
-  <Button
-    onClick={() => handleDownloadDocument(doc)}
-    className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
-  >
-    <svg
-      className="w-4 h-4 mr-2"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      />
-    </svg>
-    Download PDF
-  </Button>;
 
   // Filter and paginate medical records
   const filteredMedicalRecords =
@@ -283,6 +259,24 @@ export default function HorseDetailPage() {
   const paginatedVaccinations = filteredVaccinations.slice(
     (vaccinationCurrentPage - 1) * itemsPerPage,
     vaccinationCurrentPage * itemsPerPage
+  );
+
+  // Filter and paginate documents
+  const filteredDocuments = documents.filter(
+    (doc) =>
+      doc.passportNo
+        ?.toLowerCase()
+        .includes(documentsSearchTerm.toLowerCase()) ||
+      doc.type?.toLowerCase().includes(documentsSearchTerm.toLowerCase()) ||
+      doc.id?.toLowerCase().includes(documentsSearchTerm.toLowerCase())
+  );
+
+  const totalDocumentsPages = Math.ceil(
+    filteredDocuments.length / itemsPerPage
+  );
+  const paginatedDocuments = filteredDocuments.slice(
+    (documentsCurrentPage - 1) * itemsPerPage,
+    documentsCurrentPage * itemsPerPage
   );
 
   if (loading) {
@@ -703,7 +697,7 @@ export default function HorseDetailPage() {
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                Documents ({horse.documents?.length || 0})
+                Documents ({documents.length || 0})
               </button>
             </div>
 
@@ -732,7 +726,7 @@ export default function HorseDetailPage() {
                   </div>
                   <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg">
                     <p className="text-lg sm:text-2xl font-bold text-green-600">
-                      {horse.documents?.length || 0}
+                      {documents.length || 0}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600">
                       Documents
@@ -1219,8 +1213,8 @@ export default function HorseDetailPage() {
 
             {activeTab === "documents" && (
               <div>
-                {isVet && (
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
+                  {isVet && (
                     <Button
                       onClick={handleGeneratePassport}
                       disabled={generatingPassport}
@@ -1250,31 +1244,74 @@ export default function HorseDetailPage() {
                         </>
                       )}
                     </Button>
-                  </div>
-                )}
+                  )}
+                  <Input
+                    type="text"
+                    placeholder="Search documents..."
+                    value={documentsSearchTerm}
+                    onChange={(e) => {
+                      setDocumentsSearchTerm(e.target.value);
+                      setDocumentsCurrentPage(1);
+                    }}
+                    className="flex-1 text-sm h-9"
+                  />
+                </div>
 
                 {loadingDocuments ? (
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading documents...</p>
                   </div>
-                ) : documents.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {documents.map((doc) => (
-                      <Card key={doc.id} className="p-4 sm:p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1 min-w-0">
-                            <Badge className="mb-2">{doc.type}</Badge>
-                            {doc.passportNo && (
-                              <p className="text-sm sm:text-base font-semibold text-purple-600 truncate">
-                                {doc.passportNo}
-                              </p>
-                            )}
+                ) : filteredDocuments.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {paginatedDocuments.map((doc) => (
+                        <Card key={doc.id} className="p-4 sm:p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1 min-w-0">
+                              <Badge className="mb-2">{doc.type}</Badge>
+                              {doc.passportNo && (
+                                <p className="text-sm sm:text-base font-semibold text-purple-600 truncate">
+                                  {doc.passportNo}
+                                </p>
+                              )}
+                            </div>
+                            <div className="ml-4 shrink-0">
+                              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
-                          <div className="ml-4 shrink-0">
-                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center">
+
+                          <div className="mb-4">
+                            <p className="text-xs sm:text-sm text-gray-600">
+                              Generated:{" "}
+                              {new Date(doc.createdAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Document ID: {doc.id.slice(0, 8)}...
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              onClick={() => handleDownloadDocument(doc)}
+                              className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
+                            >
                               <svg
-                                className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600"
+                                className="w-4 h-4 mr-2"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -1283,78 +1320,86 @@ export default function HorseDetailPage() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                                 />
                               </svg>
-                            </div>
+                              Download PDF
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                window.open(`/verify/${doc.id}`, "_blank")
+                              }
+                              className="flex-1 text-sm h-9"
+                            >
+                              <svg
+                                className="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              Verify
+                            </Button>
                           </div>
-                        </div>
 
-                        <div className="mb-4">
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            Generated:{" "}
-                            {new Date(doc.createdAt).toLocaleDateString()}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Document ID: {doc.id.slice(0, 8)}...
-                          </p>
-                        </div>
+                          <div className="mt-4 p-3 bg-gray-50 rounded">
+                            <p className="text-xs text-gray-600 mb-1">
+                              Digital Fingerprint:
+                            </p>
+                            <p className="text-xs font-mono text-gray-500 break-all">
+                              {doc.fingerprint.slice(0, 32)}...
+                            </p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
 
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Button
-                            onClick={() => handleDownloadDocument(doc)}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
-                          >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                            Download PDF
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              window.open(`/verify/${doc.id}`, "_blank")
-                            }
-                            className="flex-1 text-sm h-9"
-                          >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            Verify
-                          </Button>
-                        </div>
-
-                        <div className="mt-4 p-3 bg-gray-50 rounded">
-                          <p className="text-xs text-gray-600 mb-1">
-                            Digital Fingerprint:
-                          </p>
-                          <p className="text-xs font-mono text-gray-500 break-all">
-                            {doc.fingerprint.slice(0, 32)}...
-                          </p>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+                    {totalDocumentsPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-4 sm:mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setDocumentsCurrentPage(
+                              Math.max(1, documentsCurrentPage - 1)
+                            )
+                          }
+                          disabled={documentsCurrentPage === 1}
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-xs sm:text-sm text-gray-600">
+                          Page {documentsCurrentPage} of {totalDocumentsPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setDocumentsCurrentPage(
+                              Math.min(
+                                totalDocumentsPages,
+                                documentsCurrentPage + 1
+                              )
+                            )
+                          }
+                          disabled={
+                            documentsCurrentPage === totalDocumentsPages
+                          }
+                          className="h-8 text-xs sm:h-9 sm:text-sm"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Card className="p-6 sm:p-12 text-center">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
@@ -1373,12 +1418,16 @@ export default function HorseDetailPage() {
                       </svg>
                     </div>
                     <p className="text-gray-600 text-sm sm:text-base mb-2">
-                      No documents generated yet
+                      {documentsSearchTerm
+                        ? "No documents found"
+                        : "No documents generated yet"}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500 mb-4">
-                      Generate passports and certificates for this horse
+                      {documentsSearchTerm
+                        ? "Try adjusting your search terms"
+                        : "Generate passports and certificates for this horse"}
                     </p>
-                    {isVet && (
+                    {isVet && !documentsSearchTerm && (
                       <Button
                         onClick={handleGeneratePassport}
                         disabled={generatingPassport}
@@ -1434,7 +1483,7 @@ export default function HorseDetailPage() {
                     <li>
                       All vaccinations ({horse.vaccinations?.length || 0})
                     </li>
-                    <li>All documents ({horse.documents?.length || 0})</li>
+                    <li>All documents ({documents.length || 0})</li>
                     <li>Ownership history</li>
                   </ul>
                 </div>
