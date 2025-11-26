@@ -4,19 +4,13 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { generatePassport } from "@/lib/pdf/passportGenerator";
-import { v2 as cloudinary } from "cloudinary";
+import { UTApi } from "uploadthing/server";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const utapi = new UTApi();
 
 export async function POST(req, context) {
-  // FIX: Await params in Next.js 15
   const params = await context.params;
   const session = await getServerSession(authOptions);
 
@@ -31,13 +25,6 @@ export async function POST(req, context) {
       include: {
         owners: {
           include: { owner: true },
-          orderBy: { startDate: "desc" },
-        },
-        vaccinations: {
-          orderBy: { dateGiven: "desc" },
-        },
-        medicalRecords: {
-          orderBy: { recordDate: "desc" },
         },
       },
     });
@@ -86,22 +73,17 @@ export async function POST(req, context) {
       .update(pdfBuffer)
       .digest("hex");
 
-    // Upload to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: "raw",
-          folder: "vetsense/passports",
-          public_id: `passport_${passportNo}`,
-          format: "pdf",
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(pdfBuffer);
+    // Create a File object for UploadThing
+    const pdfFile = new File([pdfBuffer], `${passportNo}.pdf`, {
+      type: "application/pdf",
     });
+
+    // Upload to UploadThing
+    const uploadResult = await utapi.uploadFiles(pdfFile);
+
+    if (uploadResult.error) {
+      throw new Error(`Upload failed: ${uploadResult.error.message}`);
+    }
 
     // Save document record
     const document = await prisma.document.create({
@@ -109,13 +91,14 @@ export async function POST(req, context) {
         horseId: horse.id,
         type: "PASSPORT",
         passportNo: passportNo,
-        fileUrl: uploadResult.secure_url,
+        fileUrl: uploadResult.data.url, // UploadThing URL
         fingerprint: fingerprint,
         metadata: {
           generated: new Date().toISOString(),
           vetId: session.user.id,
           horseName: horse.name,
           generatedBy: session.user.name,
+          uploadthingKey: uploadResult.data.key, // Store for deletion later
         },
       },
     });
@@ -133,7 +116,7 @@ export async function POST(req, context) {
     return NextResponse.json({
       success: true,
       document: document,
-      downloadUrl: uploadResult.secure_url,
+      downloadUrl: uploadResult.data.url,
       passportNo: passportNo,
     });
   } catch (error) {

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import DownloadButton from "@/components/DownloadButton";
 
 export default function HorseDetailPage() {
   const params = useParams();
@@ -63,10 +64,8 @@ export default function HorseDetailPage() {
 
   useEffect(() => {
     fetchHorse();
-    if (activeTab === "documents") {
-      fetchDocuments();
-    }
-  }, [activeTab, params.id]);
+    fetchDocuments();
+  }, [params.id]);
 
   const fetchHorse = async () => {
     try {
@@ -200,25 +199,6 @@ export default function HorseDetailPage() {
       console.error(error);
     } finally {
       setGeneratingPassport(false);
-    }
-  };
-
-  const handleDownloadDocument = async (doc) => {
-    try {
-      const response = await fetch(doc.fileUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${doc.passportNo || "document"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success("Document downloaded successfully");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download document");
     }
   };
 
@@ -1306,25 +1286,10 @@ export default function HorseDetailPage() {
                           </div>
 
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              onClick={() => handleDownloadDocument(doc)}
-                              className="w-full bg-purple-600 hover:bg-purple-700 text-sm h-9"
-                            >
-                              <svg
-                                className="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                              </svg>
-                              Download PDF
-                            </Button>
+                            <DownloadButton
+                              fileUrl={doc.fileUrl}
+                              fileName={doc.fileName} // e.g. VETSENSE-E-2025-019.pdf
+                            />
                             <Button
                               variant="outline"
                               onClick={() =>
