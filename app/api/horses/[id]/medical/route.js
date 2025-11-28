@@ -49,6 +49,9 @@ export async function POST(request, { params }) {
         horseId: id,
         diagnosis: body.diagnosis,
         treatment: body.treatment,
+        drug: body.drug || null, // NEW: Drug used
+        dosage: body.dosage || null, // NEW: Dosage information
+        vet: body.vet || null, // NEW: Administering veterinarian
         notes: body.notes || null,
         attachments: body.attachments || [],
         recordDate: body.recordDate ? new Date(body.recordDate) : new Date(),

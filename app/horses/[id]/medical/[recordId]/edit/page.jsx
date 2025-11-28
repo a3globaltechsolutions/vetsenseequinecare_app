@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -12,11 +13,16 @@ import toast from "react-hot-toast";
 export default function EditMedicalRecordPage() {
   const params = useParams();
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     diagnosis: "",
     treatment: "",
+    drug: "",
+    dosage: "",
+    vet: "",
     notes: "",
     recordDate: "",
     attachments: [],
@@ -24,7 +30,6 @@ export default function EditMedicalRecordPage() {
 
   useEffect(() => {
     fetchRecord();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.recordId]);
 
   const fetchRecord = async () => {
@@ -32,19 +37,23 @@ export default function EditMedicalRecordPage() {
       const res = await fetch(
         `/api/horses/${params.id}/medical/${params.recordId}`
       );
-      if (res.ok) {
-        const data = await res.json();
-        setFormData({
-          diagnosis: data.diagnosis || "",
-          treatment: data.treatment || "",
-          notes: data.notes || "",
-          recordDate: new Date(data.recordDate).toISOString().split("T")[0],
-          attachments: data.attachments || [],
-        });
-      } else {
+      if (!res.ok) {
         toast.error("Record not found");
         router.push(`/horses/${params.id}`);
+        return;
       }
+
+      const data = await res.json();
+      setFormData({
+        diagnosis: data.diagnosis || "",
+        treatment: data.treatment || "",
+        drug: data.drug || "",
+        dosage: data.dosage || "",
+        vet: data.vet || "",
+        notes: data.notes || "",
+        recordDate: new Date(data.recordDate).toISOString().split("T")[0],
+        attachments: data.attachments || [],
+      });
     } catch (error) {
       console.error("Error fetching record:", error);
       toast.error("Failed to load record");
@@ -165,7 +174,6 @@ export default function EditMedicalRecordPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, diagnosis: e.target.value })
                 }
-                placeholder="e.g., Mild colic, Lameness"
                 required
                 className="mt-1"
               />
@@ -178,14 +186,56 @@ export default function EditMedicalRecordPage() {
               </Label>
               <textarea
                 id="treatment"
+                rows={4}
                 value={formData.treatment}
                 onChange={(e) =>
                   setFormData({ ...formData, treatment: e.target.value })
                 }
-                placeholder="Describe the treatment..."
                 required
-                rows={4}
-                className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full mt-1 border border-gray-300 rounded-md p-2"
+              />
+            </div>
+
+            {/* Drug + Dosage */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="drug">Drug/Medication Used</Label>
+                <Input
+                  id="drug"
+                  value={formData.drug}
+                  onChange={(e) =>
+                    setFormData({ ...formData, drug: e.target.value })
+                  }
+                  placeholder="e.g., Imidocarb dipropionate"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="dosage">Dosage</Label>
+                <Input
+                  id="dosage"
+                  value={formData.dosage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dosage: e.target.value })
+                  }
+                  placeholder="e.g., 2mg/kg"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Veterinarian */}
+            <div>
+              <Label htmlFor="vet">Administering Veterinarian</Label>
+              <Input
+                id="vet"
+                value={formData.vet}
+                onChange={(e) =>
+                  setFormData({ ...formData, vet: e.target.value })
+                }
+                placeholder="e.g., Dr. John Doe"
+                className="mt-1"
               />
             </div>
 
@@ -194,23 +244,50 @@ export default function EditMedicalRecordPage() {
               <Label htmlFor="notes">Additional Notes</Label>
               <textarea
                 id="notes"
+                rows={3}
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="Any additional observations..."
-                rows={3}
-                className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full mt-1 border border-gray-300 rounded-md p-2"
               />
+            </div>
+
+            {/* Info Box */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex gap-3">
+                <svg
+                  className="w-5 h-5 text-amber-600 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="text-sm text-amber-800">
+                  <p className="font-semibold mb-1">
+                    Piroplasmosis Treatment Records
+                  </p>
+                  <p>
+                    Ensure the drug and dosage fields are accurate. They appear
+                    on the Piroplasmosis certificate.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Attachments */}
             <div>
               <Label className="mb-2 block">Attachments</Label>
               <CloudinaryUpload onUploadComplete={handleAddAttachment} />
+
               {formData.attachments.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium">Attached Files:</p>
                   {formData.attachments.map((url, index) => (
                     <div
                       key={index}
@@ -225,9 +302,9 @@ export default function EditMedicalRecordPage() {
                         Attachment {index + 1}
                       </a>
                       <Button
-                        type="button"
                         size="sm"
                         variant="destructive"
+                        type="button"
                         onClick={() => handleRemoveAttachment(index)}
                       >
                         Remove
@@ -238,7 +315,7 @@ export default function EditMedicalRecordPage() {
               )}
             </div>
 
-            {/* Submit Buttons */}
+            {/* Submit */}
             <div className="flex gap-3 pt-6 border-t">
               <Button
                 type="button"
@@ -249,6 +326,7 @@ export default function EditMedicalRecordPage() {
               >
                 Cancel
               </Button>
+
               <Button
                 type="submit"
                 disabled={saving}

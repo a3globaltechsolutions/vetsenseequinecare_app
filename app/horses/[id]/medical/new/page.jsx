@@ -14,6 +14,7 @@ export default function NewMedicalRecordPage() {
   const router = useRouter();
   const [horse, setHorse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentVet, setCurrentVet] = useState(null);
   const [formData, setFormData] = useState({
     diagnosis: "",
     treatment: "",
@@ -27,6 +28,7 @@ export default function NewMedicalRecordPage() {
 
   useEffect(() => {
     fetchHorse();
+    fetchCurrentVet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
@@ -39,6 +41,25 @@ export default function NewMedicalRecordPage() {
       }
     } catch (error) {
       console.error("Error fetching horse:", error);
+    }
+  };
+
+  const fetchCurrentVet = async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      if (res.ok) {
+        const session = await res.json();
+        if (session?.user) {
+          setCurrentVet(session.user);
+          // Auto-fill vet field with current vet's name
+          setFormData((prev) => ({
+            ...prev,
+            vet: `${session.user.name} (${session.user.title || "DVM"})`,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching vet info:", error);
     }
   };
 
@@ -207,9 +228,14 @@ export default function NewMedicalRecordPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, vet: e.target.value })
                 }
-                placeholder="e.g., Dr. Simpa Muhammad AbdulAzeez"
+                placeholder="e.g., Dr. John Doe"
                 className="mt-1"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                {currentVet
+                  ? `Auto-filled with your name. Will appear on medical certificates.`
+                  : `Will appear on the Piroplasmosis treatment certificate`}
+              </p>
             </div>
 
             {/* Notes */}
