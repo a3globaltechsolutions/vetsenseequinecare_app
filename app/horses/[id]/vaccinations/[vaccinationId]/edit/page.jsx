@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -7,57 +8,111 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import toast from "react-hot-toast";
+import { addYears } from "date-fns";
 
 export default function EditVaccinationPage() {
   const params = useParams();
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentVet, setCurrentVet] = useState(null);
+
   const [formData, setFormData] = useState({
     vaccineName: "",
     dateGiven: "",
     nextDue: "",
     batchNumber: "",
+    administeredBy: "",
+    certificateNo: "",
     notes: "",
   });
 
+  // Nigerian standard vaccines (same as Add)
+  const nigerianVaccines = [
+    "African Horse Sickness",
+    "Tetanus",
+    "Equine Influenza",
+    "Rabies",
+    "Strangles",
+  ];
+
   useEffect(() => {
     fetchVaccination();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchCurrentVet();
   }, [params.vaccinationId]);
+
+  const fetchCurrentVet = async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      if (res.ok) {
+        const session = await res.json();
+        setCurrentVet(session.user);
+
+        if (session?.user?.name) {
+          setFormData((prev) => ({
+            ...prev,
+            administeredBy:
+              prev.administeredBy ||
+              `${session.user.name} (${session.user.title || "DVM"})`,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching vet:", error);
+    }
+  };
 
   const fetchVaccination = async () => {
     try {
       const res = await fetch(
         `/api/horses/${params.id}/vaccinations/${params.vaccinationId}`
       );
-      if (res.ok) {
-        const data = await res.json();
-        setFormData({
-          vaccineName: data.vaccineName || "",
-          dateGiven: new Date(data.dateGiven).toISOString().split("T")[0],
-          nextDue: new Date(data.nextDue).toISOString().split("T")[0],
-          batchNumber: data.batchNumber || "",
-          notes: data.notes || "",
-        });
-      } else {
+
+      if (!res.ok) {
         toast.error("Vaccination not found");
-        router.push(`/horses/${params.id}`);
+        return router.push(`/horses/${params.id}`);
       }
+
+      const data = await res.json();
+      console.log(data);
+
+      setFormData({
+        vaccineName: data.vaccineName,
+        dateGiven: new Date(data.dateGiven).toISOString().split("T")[0],
+        nextDue: new Date(data.nextDue).toISOString().split("T")[0],
+        batchNumber: data.batchNumber || "",
+        administeredBy: data.administeredBy || "",
+        certificateNo: data.certificateNo || "",
+        notes: data.notes || "",
+      });
     } catch (error) {
-      console.error("Error fetching vaccination:", error);
+      console.error(error);
       toast.error("Failed to load vaccination");
     } finally {
       setLoading(false);
     }
   };
 
+  // Auto-recalculate next due date
+  const handleDateChange = (e) => {
+    const dateGiven = e.target.value;
+    const nextDue = addYears(new Date(dateGiven), 1)
+      .toISOString()
+      .split("T")[0];
+
+    setFormData({ ...formData, dateGiven, nextDue });
+  };
+
+  const handleQuickSelect = (vaccineName) => {
+    setFormData({ ...formData, vaccineName });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.vaccineName.trim() || !formData.dateGiven) {
-      toast.error("Vaccine name and date given are required");
-      return;
+    if (!formData.vaccineName.trim()) {
+      return toast.error("Vaccine name is required");
     }
 
     setSaving(true);
@@ -74,16 +129,16 @@ export default function EditVaccinationPage() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        toast.success("Vaccination updated successfully!");
-        router.push(`/horses/${params.id}`);
-        router.refresh();
-      } else {
-        toast.error(data.error || "Failed to update vaccination");
+      if (!res.ok) {
+        return toast.error(data.error || "Update failed");
       }
+
+      toast.success("Vaccination updated!");
+      router.push(`/horses/${params.id}`);
+      router.refresh();
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
+      console.error(error);
+      toast.error("Failed to update");
     } finally {
       setSaving(false);
     }
@@ -91,11 +146,8 @@ export default function EditVaccinationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading vaccination...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Loading vaccination...
       </div>
     );
   }
@@ -103,128 +155,153 @@ export default function EditVaccinationPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={`/horses/${params.id}`}>
-              <Button variant="outline" size="sm">
-                ← Back
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Edit Vaccination
-              </h1>
-              <p className="text-sm text-gray-600">
-                Update vaccination details
-              </p>
-            </div>
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+          <Link href={`/horses/${params.id}`}>
+            <Button variant="outline" size="sm">
+              ← Back
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold">Edit Vaccination</h1>
+            <p className="text-sm text-gray-600">
+              Modify existing vaccination record
+            </p>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-2xl mx-auto p-6">
-        <Card className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Vaccine Name */}
+        <Card className="p-8 space-y-6">
+          {/* Quick Select */}
+          <div>
+            <Label>Quick Select (Nigerian Standards)</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {nigerianVaccines.map((v) => (
+                <Button
+                  key={v}
+                  type="button"
+                  size="sm"
+                  variant={formData.vaccineName === v ? "default" : "outline"}
+                  onClick={() => handleQuickSelect(v)}
+                  className={
+                    formData.vaccineName === v
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : ""
+                  }
+                >
+                  {v}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Vaccine Name */}
+          <div>
+            <Label>Vaccine Name</Label>
+            <Input
+              value={formData.vaccineName}
+              onChange={(e) =>
+                setFormData({ ...formData, vaccineName: e.target.value })
+              }
+              required
+            />
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="vaccineName">
-                Vaccine Name <span className="text-red-500">*</span>
-              </Label>
+              <Label>Date Given</Label>
               <Input
-                id="vaccineName"
-                value={formData.vaccineName}
-                onChange={(e) =>
-                  setFormData({ ...formData, vaccineName: e.target.value })
-                }
-                placeholder="e.g., Tetanus Toxoid"
+                type="date"
+                value={formData.dateGiven}
+                onChange={handleDateChange}
                 required
-                className="mt-1"
               />
             </div>
 
-            {/* Date Given and Next Due */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="dateGiven">
-                  Date Given <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="dateGiven"
-                  type="date"
-                  value={formData.dateGiven}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dateGiven: e.target.value })
-                  }
-                  required
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="nextDue">Next Due Date</Label>
-                <Input
-                  id="nextDue"
-                  type="date"
-                  value={formData.nextDue}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nextDue: e.target.value })
-                  }
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            {/* Batch Number */}
             <div>
-              <Label htmlFor="batchNumber">Batch Number</Label>
+              <Label>Next Due</Label>
               <Input
-                id="batchNumber"
+                type="date"
+                value={formData.nextDue}
+                onChange={(e) =>
+                  setFormData({ ...formData, nextDue: e.target.value })
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-calculated: 1 year after date given
+              </p>
+            </div>
+          </div>
+
+          {/* Batch + Certificate */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Batch Number</Label>
+              <Input
                 value={formData.batchNumber}
                 onChange={(e) =>
                   setFormData({ ...formData, batchNumber: e.target.value })
                 }
-                placeholder="e.g., TT-2024-001"
-                className="mt-1"
               />
             </div>
 
-            {/* Notes */}
             <div>
-              <Label htmlFor="notes">Notes</Label>
-              <textarea
-                id="notes"
-                value={formData.notes}
+              <Label>Certificate Number</Label>
+              <Input
+                value={formData.certificateNo}
                 onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
+                  setFormData({ ...formData, certificateNo: e.target.value })
                 }
-                placeholder="Any additional notes..."
-                rows={3}
-                className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
 
-            {/* Submit Buttons */}
-            <div className="flex gap-3 pt-6 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={saving}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
+          {/* Administered By */}
+          <div>
+            <Label>Administered By</Label>
+            <Input
+              value={formData.administeredBy}
+              onChange={(e) =>
+                setFormData({ ...formData, administeredBy: e.target.value })
+              }
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <Label>Notes</Label>
+            <textarea
+              rows={3}
+              className="w-full border rounded-md p-2"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+            ></textarea>
+          </div>
+
+          {/* Save */}
+          <div className="flex gap-3 pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={saving}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
+              onClick={handleSubmit}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </Card>
       </main>
     </div>

@@ -57,6 +57,8 @@ export async function PUT(req, { params }) {
         dateGiven: new Date(data.dateGiven),
         nextDue: new Date(data.nextDue),
         batchNumber: data.batchNumber || null,
+        administeredBy: data.administeredBy || null,
+        certificateNo: data.certificateNo || null,
         notes: data.notes || null,
       },
     });

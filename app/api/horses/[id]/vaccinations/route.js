@@ -84,6 +84,8 @@ export async function POST(req, { params }) {
         dateGiven: new Date(data.dateGiven),
         nextDue: nextDue,
         batchNumber: data.batchNumber || null,
+        administeredBy: data.administeredBy || null,
+        certificateNo: data.certificateNo || null,
         notes: data.notes || null,
       },
     });

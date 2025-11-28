@@ -14,6 +14,7 @@ export default function NewVaccinationPage() {
   const router = useRouter();
   const [horse, setHorse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentVet, setCurrentVet] = useState(null);
   const [formData, setFormData] = useState({
     vaccineName: "",
     dateGiven: new Date().toISOString().split("T")[0],
@@ -35,6 +36,7 @@ export default function NewVaccinationPage() {
 
   useEffect(() => {
     fetchHorse();
+    fetchCurrentVet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
@@ -47,6 +49,27 @@ export default function NewVaccinationPage() {
       }
     } catch (error) {
       console.error("Error fetching horse:", error);
+    }
+  };
+
+  const fetchCurrentVet = async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      if (res.ok) {
+        const session = await res.json();
+        if (session?.user) {
+          setCurrentVet(session.user);
+          // Auto-fill administeredBy with current vet's name
+          setFormData((prev) => ({
+            ...prev,
+            administeredBy: `${session.user.name} (${
+              session.user.title || "DVM"
+            })`,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching vet info:", error);
     }
   };
 
@@ -244,11 +267,13 @@ export default function NewVaccinationPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, administeredBy: e.target.value })
                 }
-                placeholder="e.g., Dr. Simpa Muhammad AbdulAzeez (DVM, 8829)"
+                placeholder="e.g., Dr. John Doe (DVM, 1234)"
                 className="mt-1"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Will appear on vaccination certificates in passport
+                {currentVet
+                  ? `Auto-filled with your name. Will appear on vaccination certificates.`
+                  : `Will appear on vaccination certificates in passport`}
               </p>
             </div>
 
