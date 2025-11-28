@@ -37,6 +37,13 @@ export async function GET(req, { params }) {
         documents: {
           orderBy: { createdAt: "desc" },
         },
+        _count: {
+          select: {
+            medicalRecords: true,
+            vaccinations: true,
+            documents: true,
+          },
+        },
       },
     });
 
@@ -93,16 +100,37 @@ export async function PUT(req, { params }) {
       }
     }
 
+    // Normalize dates to ISO format (midnight UTC)
+    const dobISO = data.dob ? new Date(`${data.dob}T00:00:00Z`) : null;
+    const lastDewormingISO = data.lastDeworming
+      ? new Date(`${data.lastDeworming}T00:00:00Z`)
+      : null;
+
     const horse = await prisma.horse.update({
       where: { id },
       data: {
         name: data.name,
         breed: data.breed || null,
-        age: data.age ? parseInt(data.age) : null,
+        dob: dobISO,
         color: data.color || null,
         sex: data.sex || null,
         microchip: data.microchip || null,
         imageUrl: data.imageUrl || null,
+        countryOfBirth: data.countryOfBirth || "Nigeria",
+        sire: data.sire || null,
+        dam: data.dam || null,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        bodyConditionScore: data.bodyConditionScore
+          ? parseFloat(data.bodyConditionScore)
+          : null,
+        lastDeworming: lastDewormingISO,
+        bloodType: data.bloodType || null,
+        allergies: data.allergies || null,
+        behavior: data.behavior || null,
+        dietary: data.dietary || null,
+        exerciseRestrictions: data.exerciseRestrictions || null,
+        insurance: data.insurance || null,
+        currentMedications: data.currentMedications || null,
         status: data.status || "ACTIVE",
       },
     });
@@ -150,7 +178,7 @@ export async function DELETE(req, { params }) {
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        horseId: params.id,
+        horseId: id,
         action: "HORSE_DELETED",
         details: `Deleted horse profile: ${horse.name}`,
       },

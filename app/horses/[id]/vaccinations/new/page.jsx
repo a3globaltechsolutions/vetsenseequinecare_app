@@ -19,8 +19,19 @@ export default function NewVaccinationPage() {
     dateGiven: new Date().toISOString().split("T")[0],
     nextDue: addYears(new Date(), 1).toISOString().split("T")[0],
     batchNumber: "",
+    administeredBy: "", // NEW: Veterinarian who administered
+    certificateNo: "", // NEW: Certificate number
     notes: "",
   });
+
+  // Predefined vaccine options for quick selection
+  const nigerianVaccines = [
+    "African Horse Sickness",
+    "Tetanus",
+    "Equine Influenza",
+    "Rabies",
+    "Strangles",
+  ];
 
   useEffect(() => {
     fetchHorse();
@@ -50,6 +61,11 @@ export default function NewVaccinationPage() {
       dateGiven,
       nextDue,
     });
+  };
+
+  // Quick select vaccine
+  const handleQuickSelect = (vaccineName) => {
+    setFormData({ ...formData, vaccineName });
   };
 
   const handleSubmit = async (e) => {
@@ -113,6 +129,33 @@ export default function NewVaccinationPage() {
       <main className="max-w-2xl mx-auto p-6">
         <Card className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Quick Select Vaccines (Nigerian Standards) */}
+            <div>
+              <Label className="mb-2 block">
+                Quick Select (Nigerian Standards)
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {nigerianVaccines.map((vaccine) => (
+                  <Button
+                    key={vaccine}
+                    type="button"
+                    variant={
+                      formData.vaccineName === vaccine ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => handleQuickSelect(vaccine)}
+                    className={
+                      formData.vaccineName === vaccine
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : ""
+                    }
+                  >
+                    {vaccine}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Vaccine Name */}
             <div>
               <Label htmlFor="vaccineName">
@@ -124,7 +167,7 @@ export default function NewVaccinationPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, vaccineName: e.target.value })
                 }
-                placeholder="e.g., Tetanus Toxoid, Equine Influenza, West Nile Virus"
+                placeholder="e.g., African Horse Sickness, Tetanus, Equine Influenza"
                 required
                 className="mt-1"
               />
@@ -163,18 +206,50 @@ export default function NewVaccinationPage() {
               </div>
             </div>
 
-            {/* Batch Number */}
+            {/* NEW: Batch Number and Certificate Number */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="batchNumber">Batch Number</Label>
+                <Input
+                  id="batchNumber"
+                  value={formData.batchNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, batchNumber: e.target.value })
+                  }
+                  placeholder="e.g., AHS-2024-001"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="certificateNo">Certificate Number</Label>
+                <Input
+                  id="certificateNo"
+                  value={formData.certificateNo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, certificateNo: e.target.value })
+                  }
+                  placeholder="e.g., VETSENSE-AHS-2025-001"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* NEW: Administering Veterinarian */}
             <div>
-              <Label htmlFor="batchNumber">Batch Number</Label>
+              <Label htmlFor="administeredBy">Administering Veterinarian</Label>
               <Input
-                id="batchNumber"
-                value={formData.batchNumber}
+                id="administeredBy"
+                value={formData.administeredBy}
                 onChange={(e) =>
-                  setFormData({ ...formData, batchNumber: e.target.value })
+                  setFormData({ ...formData, administeredBy: e.target.value })
                 }
-                placeholder="e.g., TT-2024-001"
+                placeholder="e.g., Dr. Simpa Muhammad AbdulAzeez (DVM, 8829)"
                 className="mt-1"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Will appear on vaccination certificates in passport
+              </p>
             </div>
 
             {/* Notes */}
@@ -188,15 +263,15 @@ export default function NewVaccinationPage() {
                 }
                 placeholder="Any additional notes or observations..."
                 rows={3}
-                className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
-            {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            {/* Info Box - Nigerian Equine Requirements */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <div className="flex gap-3">
                 <svg
-                  className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
+                  className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -208,13 +283,23 @@ export default function NewVaccinationPage() {
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-1">Automatic Reminders</p>
-                  <p>
-                    Horse owners will receive email reminders when vaccinations
-                    are due. The next due date is automatically calculated as 1
-                    year from the date given.
+                <div className="text-sm text-purple-800">
+                  <p className="font-semibold mb-1">
+                    Nigerian Equine Vaccination Standards
                   </p>
+                  <p className="mb-2">
+                    Each vaccination will appear on a dedicated certificate page
+                    in the horse passport:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>African Horse Sickness (AHS) - Critical in Nigeria</li>
+                    <li>Tetanus - Standard protection</li>
+                    <li>Equine Influenza - Respiratory protection</li>
+                    <li>
+                      Piroplasmosis treatment (add via Medical Records if
+                      needed)
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -233,7 +318,7 @@ export default function NewVaccinationPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
               >
                 {loading ? "Adding Vaccination..." : "Add Vaccination"}
               </Button>

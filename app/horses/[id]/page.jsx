@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
+
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -272,6 +273,14 @@ export default function HorseDetailPage() {
 
   if (!horse) {
     return null;
+  }
+
+  function calculateAge(dob) {
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    const ageInMs = new Date().getTime() - birthDate.getTime();
+    const ageInYears = ageInMs / (1000 * 60 * 60 * 24 * 365.25);
+    return Math.floor(ageInYears); // or Math.round(ageInYears) to round
   }
 
   const isVet = session?.user?.role === "VET";
@@ -550,62 +559,214 @@ export default function HorseDetailPage() {
                   </svg>
                 </div>
               )}
-              <div className="p-3 sm:p-4">
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      Status
-                    </span>
-                    <Badge
-                      variant={
-                        horse.status === "ACTIVE" ? "default" : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {horse.status}
-                    </Badge>
-                  </div>
-                  {horse.age && (
-                    <div className="flex justify-between">
-                      <span className="text-xs sm:text-sm text-gray-600">
-                        Age
-                      </span>
-                      <span className="font-medium text-sm sm:text-base">
-                        {horse.age} years
-                      </span>
-                    </div>
-                  )}
-                  {horse.color && (
-                    <div className="flex justify-between">
-                      <span className="text-xs sm:text-sm text-gray-600">
-                        Color
-                      </span>
-                      <span className="font-medium text-sm sm:text-base">
-                        {horse.color}
-                      </span>
-                    </div>
-                  )}
-                  {horse.sex && (
-                    <div className="flex justify-between">
-                      <span className="text-xs sm:text-sm text-gray-600">
-                        Sex
-                      </span>
-                      <span className="font-medium text-sm sm:text-base capitalize">
-                        {horse.sex.toLowerCase()}
-                      </span>
-                    </div>
-                  )}
-                  {horse.microchip && (
-                    <div className="flex justify-between">
-                      <span className="text-xs sm:text-sm text-gray-600">
-                        Microchip
-                      </span>
-                      <span className="font-mono text-xs">
-                        {horse.microchip}
-                      </span>
-                    </div>
-                  )}
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs sm:text-sm text-gray-600">
+                    Status
+                  </span>
+                  <Badge
+                    variant={
+                      horse.status === "ACTIVE" ? "default" : "secondary"
+                    }
+                    className="text-xs"
+                  >
+                    {horse.status}
+                  </Badge>
                 </div>
+
+                {horse.dob && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Date of Birth
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {new Date(horse.dob).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                )}
+                {/* Dynamic Info */}
+                {horse.dob && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Age
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {calculateAge(horse.dob)} years
+                    </span>
+                  </div>
+                )}
+                {horse.breed && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Breed
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.breed}
+                    </span>
+                  </div>
+                )}
+                {horse.color && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Color
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.color}
+                    </span>
+                  </div>
+                )}
+                {horse.sex && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Sex
+                    </span>
+                    <span className="font-medium text-sm sm:text-base capitalize">
+                      {horse.sex.toLowerCase()}
+                    </span>
+                  </div>
+                )}
+                {horse.microchip && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Microchip
+                    </span>
+                    <span className="font-mono text-xs">{horse.microchip}</span>
+                  </div>
+                )}
+                {horse.countryOfBirth && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Country of Birth
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.countryOfBirth}
+                    </span>
+                  </div>
+                )}
+                {horse.sire && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Sire
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.sire}
+                    </span>
+                  </div>
+                )}
+                {horse.dam && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Dam
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.dam}
+                    </span>
+                  </div>
+                )}
+                {horse.weight && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Weight
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.weight} kg
+                    </span>
+                  </div>
+                )}
+                {horse.bodyConditionScore && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Body Condition
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.bodyConditionScore}
+                    </span>
+                  </div>
+                )}
+                {horse.lastDeworming && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Last Deworming
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {new Date(horse.lastDeworming).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                {horse.bloodType && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Blood Type
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.bloodType}
+                    </span>
+                  </div>
+                )}
+                {horse.allergies && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Allergies
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.allergies}
+                    </span>
+                  </div>
+                )}
+                {horse.behavior && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Behavior
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.behavior}
+                    </span>
+                  </div>
+                )}
+                {horse.dietary && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Dietary
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.dietary}
+                    </span>
+                  </div>
+                )}
+                {horse.exerciseRestrictions && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Exercise Restrictions
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.exerciseRestrictions}
+                    </span>
+                  </div>
+                )}
+                {horse.insurance && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Insurance
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.insurance}
+                    </span>
+                  </div>
+                )}
+                {horse.currentMedications && (
+                  <div className="flex justify-between">
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Current Medications
+                    </span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {horse.currentMedications}
+                    </span>
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -1431,7 +1592,7 @@ export default function HorseDetailPage() {
               </div>
               <span className="break-words">Delete {horse.name}?</span>
             </AlertDialogTitle>
-            <AlertDialogDescription asChild>
+            <AlertDialogDescription>
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Are you sure you want to delete <strong>{horse.name}</strong>?
@@ -1456,13 +1617,16 @@ export default function HorseDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-            <AlertDialogCancel disabled={deleting} className="m-0 sm:m-0">
+            <AlertDialogCancel
+              disabled={deleting}
+              onClick={() => setShowDeleteDialog(false)}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {deleting ? (
                 <>
@@ -1526,14 +1690,14 @@ export default function HorseDetailPage() {
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
             <AlertDialogCancel
               disabled={!!deletingMedical}
-              className="m-0 sm:m-0"
+              onClick={() => setShowDeleteMedicalDialog(false)}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteMedical}
               disabled={!!deletingMedical}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {deletingMedical ? (
                 <>
@@ -1582,14 +1746,14 @@ export default function HorseDetailPage() {
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
             <AlertDialogCancel
               disabled={!!deletingVaccination}
-              className="m-0 sm:m-0"
+              onClick={() => setShowDeleteVaccinationDialog(false)}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteVaccination}
               disabled={!!deletingVaccination}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 m-0 sm:m-0"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {deletingVaccination ? (
                 <>

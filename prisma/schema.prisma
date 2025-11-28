@@ -8,34 +8,59 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  name         String
-  phone        String?
-  address      String?
-  state        String?
-  country      String?       @default("Nigeria")
-  role         Role          @default(OWNER)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  title        String?
-  activityLogs ActivityLog[]
-  ownedHorses  Ownership[]
+  id             String        @id @default(cuid())
+  email          String        @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  address        String?
+  state          String?
+  country        String?       @default("Nigeria")
+  emergencyName  String?
+  emergencyPhone String?
+  role           Role          @default(OWNER)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  title          String?
+  activityLogs   ActivityLog[]
+  ownedHorses    Ownership[]
 }
 
 model Horse {
-  id             String          @id @default(cuid())
+  id             String      @id @default(cuid())
   name           String
   breed          String?
-  age            Int?
+  dob            DateTime? // Date of Birth (correct!)
   color          String?
   sex            Sex?
-  microchip      String?         @unique
+  microchip      String?     @unique
   imageUrl       String?
-  status         HorseStatus     @default(ACTIVE)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  countryOfBirth String?     @default("Nigeria")
+  status         HorseStatus @default(ACTIVE)
+
+  // Parent info
+  sire String?
+  dam  String?
+
+  // Medical info
+  bloodType            String?
+  allergies            String?
+  currentMedications   String?
+  dietary              String?
+  behavior             String?
+  exerciseRestrictions String?
+
+  // Physical attributes
+  weight             Float? // e.g. 450 (kg)
+  bodyConditionScore Float? // e.g. 5 (1–9 scale)
+  lastDeworming      DateTime?
+
+  // Extra info
+  insurance String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   activityLogs   ActivityLog[]
   documents      Document[]
   medicalRecords MedicalRecord[]
@@ -60,6 +85,9 @@ model MedicalRecord {
   horseId     String
   diagnosis   String
   treatment   String
+  drug        String? // ADD: Specific drug used (for Piroplasmosis)
+  dosage      String? // ADD: Dosage information
+  vet         String? // ADD: Which vet administered
   notes       String?
   attachments String[]
   recordDate  DateTime @default(now())
@@ -68,15 +96,17 @@ model MedicalRecord {
 }
 
 model Vaccination {
-  id          String   @id @default(cuid())
-  horseId     String
-  vaccineName String
-  dateGiven   DateTime
-  nextDue     DateTime
-  batchNumber String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  horse       Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  horseId        String
+  vaccineName    String
+  dateGiven      DateTime
+  nextDue        DateTime
+  batchNumber    String?
+  administeredBy String? // ADD: Track which vet gave it
+  certificateNo  String? // ADD: Link to certificate number
+  notes          String?
+  createdAt      DateTime @default(now())
+  horse          Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
 }
 
 model Document {

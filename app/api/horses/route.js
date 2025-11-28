@@ -110,16 +110,37 @@ export async function POST(req) {
       }
     }
 
+    // Normalize dates to ISO format (midnight UTC)
+    const dobISO = data.dob ? new Date(`${data.dob}T00:00:00Z`) : null;
+    const lastDewormingISO = data.lastDeworming
+      ? new Date(`${data.lastDeworming}T00:00:00Z`)
+      : null;
+
     // Create horse
     const horse = await prisma.horse.create({
       data: {
         name: data.name,
         breed: data.breed || null,
-        age: data.age ? parseInt(data.age) : null,
+        dob: dobISO,
         color: data.color || null,
         sex: data.sex || null,
         microchip: data.microchip || null,
         imageUrl: data.imageUrl || null,
+        countryOfBirth: data.countryOfBirth || "Nigeria",
+        sire: data.sire || null,
+        dam: data.dam || null,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        bodyConditionScore: data.bodyConditionScore
+          ? parseFloat(data.bodyConditionScore)
+          : null,
+        lastDeworming: lastDewormingISO,
+        bloodType: data.bloodType || null,
+        allergies: data.allergies || null,
+        behavior: data.behavior || null,
+        dietary: data.dietary || null,
+        exerciseRestrictions: data.exerciseRestrictions || null,
+        insurance: data.insurance || null,
+        currentMedications: data.currentMedications || null,
         status: "ACTIVE",
       },
     });

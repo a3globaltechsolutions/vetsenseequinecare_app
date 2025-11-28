@@ -17,6 +17,9 @@ export default function NewMedicalRecordPage() {
   const [formData, setFormData] = useState({
     diagnosis: "",
     treatment: "",
+    drug: "", // NEW: Specific drug used
+    dosage: "", // NEW: Dosage information
+    vet: "", // NEW: Administering veterinarian
     notes: "",
     recordDate: new Date().toISOString().split("T")[0],
     attachments: [],
@@ -139,7 +142,7 @@ export default function NewMedicalRecordPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, diagnosis: e.target.value })
                 }
-                placeholder="e.g., Mild colic, Lameness, Respiratory infection"
+                placeholder="e.g., Mild colic, Lameness, Piroplasmosis"
                 required
                 className="mt-1"
               />
@@ -163,6 +166,52 @@ export default function NewMedicalRecordPage() {
               />
             </div>
 
+            {/* NEW: Drug and Dosage Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="drug">Drug/Medication Used</Label>
+                <Input
+                  id="drug"
+                  value={formData.drug}
+                  onChange={(e) =>
+                    setFormData({ ...formData, drug: e.target.value })
+                  }
+                  placeholder="e.g., Imidocarb dipropionate"
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Especially important for Piroplasmosis treatment
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="dosage">Dosage</Label>
+                <Input
+                  id="dosage"
+                  value={formData.dosage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dosage: e.target.value })
+                  }
+                  placeholder="e.g., 2mg/kg, 10ml"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* NEW: Administering Veterinarian */}
+            <div>
+              <Label htmlFor="vet">Administering Veterinarian</Label>
+              <Input
+                id="vet"
+                value={formData.vet}
+                onChange={(e) =>
+                  setFormData({ ...formData, vet: e.target.value })
+                }
+                placeholder="e.g., Dr. Simpa Muhammad AbdulAzeez"
+                className="mt-1"
+              />
+            </div>
+
             {/* Notes */}
             <div>
               <Label htmlFor="notes">Additional Notes</Label>
@@ -176,6 +225,36 @@ export default function NewMedicalRecordPage() {
                 rows={3}
                 className="w-full mt-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
+            </div>
+
+            {/* Info Box for Piroplasmosis */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex gap-3">
+                <svg
+                  className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="text-sm text-amber-800">
+                  <p className="font-semibold mb-1">
+                    Piroplasmosis Treatment Records
+                  </p>
+                  <p>
+                    For Piroplasmosis prophylactic treatment, ensure you fill in
+                    the drug name and dosage fields. This information will
+                    appear on the dedicated Piroplasmosis certificate in the
+                    horse passport.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Attachments */}
