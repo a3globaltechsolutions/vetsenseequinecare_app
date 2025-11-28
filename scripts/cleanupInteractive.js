@@ -118,3 +118,5 @@ async function main() {
 
 // Run the cleanup
 main();
+
+//  GET /api/seal/get-seal?type=CIRCULAR 404 in 1964ms (compile: 1318ms, render: 646ms)
