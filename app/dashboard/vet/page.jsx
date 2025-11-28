@@ -22,28 +22,55 @@ export default function VetDashboard() {
     fetchHorses();
   }, []);
 
+  // Replace your fetchHorses function with this improved version
   const fetchHorses = async () => {
     try {
-      const res = await fetch("/api/horses");
+      setLoading(true);
+      const res = await fetch("/api/horses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store", // Important for production
+      });
+
+      console.log("Response status:", res.status);
+      console.log("Response ok:", res.ok);
 
       if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Error response:", errorData);
+
         setHorses([]);
-        return toast.error("Failed to load horses. Please refresh.");
+
+        if (res.status === 401) {
+          toast.error("Session expired. Please log in again.");
+          // Optionally redirect to login
+          // window.location.href = '/auth/login';
+          return;
+        }
+
+        toast.error(
+          errorData.message || "Failed to load horses. Please refresh."
+        );
+        return;
       }
 
       const data = await res.json();
-
       console.log("Fetched horses:", data);
 
       if (!Array.isArray(data)) {
+        console.error("Invalid data format:", typeof data);
         setHorses([]);
+        toast.error("Invalid data format received");
         return;
       }
 
       setHorses(data);
     } catch (error) {
+      console.error("Fetch error:", error);
       setHorses([]);
-      toast.error("Error fetching horses");
+      toast.error(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }

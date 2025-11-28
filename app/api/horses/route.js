@@ -5,21 +5,28 @@ import { NextResponse } from "next/server";
 
 // GET all horses
 export async function GET(req) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Test database connection
+    await prisma.$connect();
+
     let horses;
 
     if (session.user.role === "VET") {
       // Vet sees all horses
       horses = await prisma.horse.findMany({
         include: {
-          vaccinations: true, // 👈 ADD THIS
-          medicalRecords: true,
+          vaccinations: {
+            orderBy: { dateGiven: "desc" },
+          },
+          medicalRecords: {
+            orderBy: { recordDate: "desc" },
+          },
           owners: {
             include: {
               owner: {
@@ -48,7 +55,12 @@ export async function GET(req) {
           },
         },
         include: {
-          vaccinations: true, // 👈 ADD THIS
+          vaccinations: {
+            orderBy: { dateGiven: "desc" },
+          },
+          medicalRecords: {
+            orderBy: { recordDate: "desc" },
+          },
           owners: {
             include: {
               owner: {
@@ -68,25 +80,34 @@ export async function GET(req) {
       });
     }
 
-    return NextResponse.json(horses);
+    return NextResponse.json(horses, { status: 200 });
   } catch (error) {
     console.error("Error fetching horses:", error);
+
+    // Return more detailed error information
     return NextResponse.json(
-      { error: "Failed to fetch horses" },
+      {
+        error: "Failed to fetch horses",
+        message: error.message,
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
 // POST - Create new horse
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || session.user.role !== "VET") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "VET") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const data = await req.json();
 
     // Validate required fields
@@ -160,7 +181,12 @@ export async function POST(req) {
   } catch (error) {
     console.error("Error creating horse:", error);
     return NextResponse.json(
-      { error: "Failed to create horse" },
+      {
+        error: "Failed to create horse",
+        message: error.message,
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
       { status: 500 }
     );
   }
