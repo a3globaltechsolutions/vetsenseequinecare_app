@@ -5,52 +5,21 @@ import { NextResponse } from "next/server";
 
 // GET all horses
 export async function GET(req) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Test database connection
-    await prisma.$connect();
-
     let horses;
 
     if (session.user.role === "VET") {
       // Vet sees all horses
       horses = await prisma.horse.findMany({
-        select: {
-          id: true,
-          name: true,
-          breed: true,
-          dob: true, // ✅ Only dob, not age
-          color: true,
-          sex: true,
-          microchip: true,
-          imageUrl: true,
-          countryOfBirth: true,
-          status: true,
-          sire: true,
-          dam: true,
-          bloodType: true,
-          allergies: true,
-          currentMedications: true,
-          dietary: true,
-          behavior: true,
-          exerciseRestrictions: true,
-          weight: true,
-          bodyConditionScore: true,
-          lastDeworming: true,
-          insurance: true,
-          createdAt: true,
-          updatedAt: true,
-          vaccinations: {
-            orderBy: { dateGiven: "desc" },
-          },
-          medicalRecords: {
-            orderBy: { recordDate: "desc" },
-          },
+        include: {
+          vaccinations: true, // 👈 ADD THIS
+          medicalRecords: true,
           owners: {
             include: {
               owner: {
@@ -79,12 +48,7 @@ export async function GET(req) {
           },
         },
         include: {
-          vaccinations: {
-            orderBy: { dateGiven: "desc" },
-          },
-          medicalRecords: {
-            orderBy: { recordDate: "desc" },
-          },
+          vaccinations: true, // 👈 ADD THIS
           owners: {
             include: {
               owner: {
@@ -104,34 +68,25 @@ export async function GET(req) {
       });
     }
 
-    return NextResponse.json(horses, { status: 200 });
+    return NextResponse.json(horses);
   } catch (error) {
     console.error("Error fetching horses:", error);
-
-    // Return more detailed error information
     return NextResponse.json(
-      {
-        error: "Failed to fetch horses",
-        message: error.message,
-        details:
-          process.env.NODE_ENV === "development" ? error.stack : undefined,
-      },
+      { error: "Failed to fetch horses" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 // POST - Create new horse
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || session.user.role !== "VET") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== "VET") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const data = await req.json();
 
     // Validate required fields
@@ -205,12 +160,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("Error creating horse:", error);
     return NextResponse.json(
-      {
-        error: "Failed to create horse",
-        message: error.message,
-        details:
-          process.env.NODE_ENV === "development" ? error.stack : undefined,
-      },
+      { error: "Failed to create horse" },
       { status: 500 }
     );
   }
