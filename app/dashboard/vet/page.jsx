@@ -23,6 +23,8 @@ export default function VetDashboard() {
   }, []);
 
   const fetchHorses = async () => {
+    console.log("Fetching horses...");
+    console.log("Database URL exists:", !!process.env.DATABASE_URL);
     try {
       const res = await fetch("/api/horses");
 
@@ -32,6 +34,7 @@ export default function VetDashboard() {
       }
 
       const data = await res.json();
+      console.log(data);
 
       if (!Array.isArray(data)) {
         setHorses([]);

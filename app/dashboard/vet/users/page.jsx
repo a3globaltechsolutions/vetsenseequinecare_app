@@ -95,7 +95,7 @@ export default function AllUsersPage() {
               <p className="text-sm text-gray-600">Manage all users</p>
             </div>
 
-            {/* Add New User Button */}
+            {/* Add New User Button
             <div className="ml-auto">
               <Link href="/dashboard/vet/users/new">
                 <Button
@@ -105,7 +105,7 @@ export default function AllUsersPage() {
                   + Add New User
                 </Button>
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </header>
