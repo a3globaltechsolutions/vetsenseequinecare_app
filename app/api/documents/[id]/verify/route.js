@@ -9,8 +9,6 @@ export async function GET(request, { params }) {
     // Await params in Next.js 15
     const resolvedParams = await params;
 
-    console.log("Verifying document ID:", resolvedParams.id);
-
     // Fetch document
     const document = await prisma.document.findUnique({
       where: { id: resolvedParams.id },
@@ -20,14 +18,11 @@ export async function GET(request, { params }) {
     });
 
     if (!document) {
-      console.log("Document not found:", resolvedParams.id);
       return NextResponse.json(
         { valid: false, error: "Document not found" },
         { status: 404 }
       );
     }
-
-    console.log("Document found:", document.passportNo);
 
     // Document exists in our database = valid
     return NextResponse.json({

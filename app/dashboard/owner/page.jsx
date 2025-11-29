@@ -21,7 +21,6 @@ export default function OwnerDashboard() {
     try {
       const res = await fetch("/api/horses");
       const data = await res.json();
-      console.log(data);
 
       setHorses(data);
     } catch (error) {

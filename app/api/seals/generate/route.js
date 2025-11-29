@@ -26,16 +26,12 @@ export async function POST(req) {
     });
 
     // Generate all seal types
-    console.log("Generating circular seal...");
     const circular = await generateCircularSeal();
 
-    console.log("Generating emblem seal...");
     const emblem = await generateEmblemSeal();
 
-    console.log("Generating wax seal...");
     const wax = await generateWaxSeal();
 
-    console.log("Generating signature overlay...");
     const signature = await generateSignatureOverlay();
 
     // Save to database

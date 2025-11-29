@@ -75,7 +75,6 @@ export default function EditVaccinationPage() {
       }
 
       const data = await res.json();
-      console.log(data);
 
       setFormData({
         vaccineName: data.vaccineName,

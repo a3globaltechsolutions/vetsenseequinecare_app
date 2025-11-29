@@ -33,8 +33,6 @@ export default function VetDashboard() {
 
       const data = await res.json();
 
-      console.log("Fetched horses:", data);
-
       if (!Array.isArray(data)) {
         setHorses([]);
         return;

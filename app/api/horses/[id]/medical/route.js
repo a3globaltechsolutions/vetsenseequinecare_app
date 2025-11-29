@@ -14,8 +14,6 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("🔍 DEBUG - Horse ID:", id);
-
     if (!id) {
       return NextResponse.json(
         { error: "Horse ID is required" },
