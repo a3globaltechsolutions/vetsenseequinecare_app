@@ -56,7 +56,6 @@ const OwnerProfileEdit = () => {
           confirmPassword: "",
         });
       } catch (err) {
-        console.error("Failed to fetch user profile", err);
         toast.error("Failed to load profile");
       } finally {
         setLoading(false);
@@ -134,7 +133,6 @@ const OwnerProfileEdit = () => {
       toast.success("Profile updated successfully!");
       router.push("/dashboard/owner/profile");
     } catch (error) {
-      console.error("Error updating profile:", error);
       toast.error(error.message || "Failed to update profile");
     } finally {
       setSaving(false);

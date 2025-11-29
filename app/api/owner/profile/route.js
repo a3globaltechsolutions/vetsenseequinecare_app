@@ -37,7 +37,6 @@ export async function GET(req) {
                 id: true,
                 name: true,
                 breed: true,
-                age: true,
                 color: true,
                 sex: true,
               },
@@ -67,7 +66,6 @@ export async function GET(req) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error fetching owner profile:", error);
     return NextResponse.json(
       { error: "Failed to fetch profile" },
       { status: 500 }

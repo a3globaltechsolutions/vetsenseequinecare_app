@@ -171,7 +171,6 @@ export default function HorseDetailPage() {
       }
     } catch (error) {
       toast.error("Error fetching documents");
-      console.error("Error fetching documents:", error);
     } finally {
       setLoadingDocuments(false);
     }
@@ -197,7 +196,6 @@ export default function HorseDetailPage() {
       }
     } catch (error) {
       toast.error("Error generating passport");
-      console.error(error);
     } finally {
       setGeneratingPassport(false);
     }

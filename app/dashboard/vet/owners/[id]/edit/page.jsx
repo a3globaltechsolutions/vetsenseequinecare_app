@@ -90,7 +90,6 @@ export default function EditOwnerPage() {
         router.push("/dashboard/vet/owners");
       }
     } catch (error) {
-      console.error("Error fetching owner:", error);
       toast.error("Failed to load owner");
     } finally {
       setFetching(false);
@@ -129,7 +128,6 @@ export default function EditOwnerPage() {
         toast.error(data.error || "Failed to update owner");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);

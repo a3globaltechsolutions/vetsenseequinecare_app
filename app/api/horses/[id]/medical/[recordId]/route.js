@@ -25,7 +25,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(record);
   } catch (error) {
-    console.error("Error fetching medical record:", error);
     return NextResponse.json(
       { error: "Failed to fetch medical record" },
       { status: 500 }
@@ -73,7 +72,6 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(record);
   } catch (error) {
-    console.error("Error updating medical record:", error);
     return NextResponse.json(
       { error: "Failed to update medical record" },
       { status: 500 }
@@ -118,7 +116,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Record deleted successfully" });
   } catch (error) {
-    console.error("Error deleting medical record:", error);
     return NextResponse.json(
       { error: "Failed to delete medical record" },
       { status: 500 }

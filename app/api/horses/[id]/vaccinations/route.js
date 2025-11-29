@@ -23,7 +23,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(vaccinations);
   } catch (error) {
-    console.error("Error fetching vaccinations:", error);
     return NextResponse.json(
       { error: "Failed to fetch vaccinations" },
       { status: 500 }
@@ -117,7 +116,6 @@ export async function POST(req, { params }) {
 
     return NextResponse.json(vaccination, { status: 201 });
   } catch (error) {
-    console.error("Error creating vaccination:", error);
     return NextResponse.json(
       { error: "Failed to create vaccination" },
       { status: 500 }

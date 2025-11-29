@@ -89,9 +89,22 @@ export default function AllUsersPage() {
                 ← Back
               </Button>
             </Link>
-            <div className="hidden md:block">
+
+            <div className="hidden md:flex flex-col">
               <h1 className="text-xl font-bold text-gray-900">All Users</h1>
               <p className="text-sm text-gray-600">Manage all users</p>
+            </div>
+
+            {/* Add New User Button */}
+            <div className="ml-auto">
+              <Link href="/dashboard/vet/users/new">
+                <Button
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  + Add New User
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -99,6 +112,10 @@ export default function AllUsersPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex md:hidden flex-col mb-5">
+          <h1 className="text-xl font-bold text-gray-900">All Users</h1>
+          <p className="text-sm text-gray-600">Manage all users</p>
+        </div>
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">

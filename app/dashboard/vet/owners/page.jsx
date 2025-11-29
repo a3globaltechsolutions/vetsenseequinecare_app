@@ -39,7 +39,6 @@ export default function OwnersManagementPage() {
       const data = await res.json();
 
       if (!Array.isArray(data)) {
-        console.error("API returned an error or invalid data:", data);
         toast.error(data.error || "Failed to load owners");
         setOwners([]); // Prevents filter() crash
         return;
@@ -47,8 +46,7 @@ export default function OwnersManagementPage() {
 
       setOwners(data);
     } catch (error) {
-      console.error("Error fetching owners:", error);
-      toast.error("Failed to load owners");
+      toast.error(error.message || "Failed to load owners");
     } finally {
       setLoading(false);
     }
@@ -77,8 +75,7 @@ export default function OwnersManagementPage() {
         toast.error(data.error || "Failed to delete owner");
       }
     } catch (error) {
-      console.error("Error deleting owner:", error);
-      toast.error("An error occurred");
+      toast.error(error.message || "An error occurred");
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);

@@ -48,7 +48,7 @@ export default function NewVaccinationPage() {
         setHorse(data);
       }
     } catch (error) {
-      console.error("Error fetching horse:", error);
+      toast.error("Error fetching horse");
     }
   };
 
@@ -69,7 +69,7 @@ export default function NewVaccinationPage() {
         }
       }
     } catch (error) {
-      console.error("Error fetching vet info:", error);
+      toast.error("Error fetching vet info");
     }
   };
 
@@ -118,7 +118,6 @@ export default function NewVaccinationPage() {
         toast.error(data.error || "Failed to add vaccination");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -317,7 +316,7 @@ export default function NewVaccinationPage() {
                     in the horse passport:
                   </p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>African Horse Sickness (AHS) - Critical in Nigeria</li>
+                    <li>African Horse Sickness (AHS)</li>
                     <li>Tetanus - Standard protection</li>
                     <li>Equine Influenza - Respiratory protection</li>
                     <li>

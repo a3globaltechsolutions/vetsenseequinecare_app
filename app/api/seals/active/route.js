@@ -22,7 +22,6 @@ export async function GET(req) {
 
     return NextResponse.json(seal);
   } catch (error) {
-    console.error("Error fetching seal:", error);
     return NextResponse.json(
       { error: "Failed to fetch seal" },
       { status: 500 }
@@ -40,7 +39,6 @@ export async function POST(req) {
 
     return NextResponse.json(seals);
   } catch (error) {
-    console.error("Error fetching seals:", error);
     return NextResponse.json(
       { error: "Failed to fetch seals" },
       { status: 500 }

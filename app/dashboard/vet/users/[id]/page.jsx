@@ -27,7 +27,7 @@ export default function VetUserDetailsPage({ params }) {
         const data = await res.json();
         setUser(data);
       } catch (err) {
-        console.error("Failed to fetch user", err);
+        toast.error("Failed to fetch user");
       } finally {
         setLoading(false);
       }

@@ -36,7 +36,6 @@ export async function GET(req, context) {
       horse: document.horse,
     });
   } catch (error) {
-    console.error("Verification error:", error);
     return NextResponse.json(
       { valid: false, error: "Verification failed" },
       { status: 500 }

@@ -24,7 +24,7 @@ export default function OwnerDashboard() {
 
       setHorses(data);
     } catch (error) {
-      console.error("Error fetching horses:", error);
+      toast.error(error.message || "Error fetching horses");
     } finally {
       setLoading(false);
     }
@@ -337,8 +337,20 @@ export default function OwnerDashboard() {
                   or to request access.
                 </p>
                 <div className="text-sm text-gray-600">
-                  <p>📞 07067677446</p>
-                  <p>✉ Vetsense.equinecare@gmail.com</p>
+                  <p>
+                    <Link
+                      href="https://wa.me/2347067677446"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      📞 07067677446
+                    </Link>{" "}
+                  </p>
+                  <p>
+                    <a href="mailto:Vetsense.equinecare@gmail.com">
+                      ✉ vetsense.equinecare@gmail.com
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
@@ -376,7 +388,15 @@ export default function OwnerDashboard() {
             </p>
             <div className="text-sm text-gray-500">
               <p>Contact VETSENSE to get your horses added:</p>
-              <p className="mt-2">📞 07067677446</p>
+              <p className="mt-2">
+                <Link
+                  href="https://wa.me/2347067677446"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📞 07067677446
+                </Link>{" "}
+              </p>
             </div>
           </Card>
         ) : (

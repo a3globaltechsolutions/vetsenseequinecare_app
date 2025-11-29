@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 export default function DownloadButton({ fileUrl, fileName }) {
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ export default function DownloadButton({ fileUrl, fileName }) {
 
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download error:", err);
+      toast.error("Download error");
     } finally {
       setLoading(false);
     }

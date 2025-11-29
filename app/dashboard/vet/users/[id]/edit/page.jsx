@@ -70,7 +70,6 @@ const AdminEditUser = ({ params }) => {
           confirmPassword: "",
         });
       } catch (err) {
-        console.error("Failed to fetch user", err);
         toast.error("Failed to load user");
       } finally {
         setLoading(false);
@@ -136,7 +135,6 @@ const AdminEditUser = ({ params }) => {
       toast.success("User updated successfully!");
       router.push(`/dashboard/vet/users/${userId}`);
     } catch (error) {
-      console.error("Error updating user:", error);
       toast.error(error.message || "Failed to update user");
     } finally {
       setSaving(false);

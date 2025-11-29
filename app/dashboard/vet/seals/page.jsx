@@ -24,7 +24,7 @@ export default function SealManagementPage() {
       setSeals(data);
       setLoading(false);
     } catch (error) {
-      console.error("Error loading seals:", error);
+      toast.error("Error loading seals");
       setLoading(false);
     }
   };

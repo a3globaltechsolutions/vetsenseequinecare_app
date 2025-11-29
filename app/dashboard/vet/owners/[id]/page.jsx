@@ -42,7 +42,6 @@ export default function OwnerDetailPage() {
         router.push("/dashboard/vet/owners");
       }
     } catch (error) {
-      console.error("Error fetching owner:", error);
       toast.error("Failed to load owner");
     } finally {
       setLoading(false);
@@ -65,7 +64,6 @@ export default function OwnerDetailPage() {
         toast.error(data.error || "Failed to delete owner");
       }
     } catch (error) {
-      console.error("Error deleting owner:", error);
       toast.error("An error occurred");
     } finally {
       setDeleting(false);

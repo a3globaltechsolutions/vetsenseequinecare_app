@@ -40,7 +40,7 @@ export default function NewMedicalRecordPage() {
         setHorse(data);
       }
     } catch (error) {
-      console.error("Error fetching horse:", error);
+      toast.error("Error fetching horse");
     }
   };
 

@@ -95,7 +95,6 @@ export async function POST(req) {
       })),
     });
   } catch (error) {
-    console.error("Seal generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate seals", details: error.message },
       { status: 500 }

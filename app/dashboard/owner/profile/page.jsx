@@ -26,8 +26,7 @@ const OwnerProfile = () => {
         const data = await res.json();
         setUser(data);
       } catch (err) {
-        console.error("Failed to fetch user profile", err);
-        toast.error("Failed to load profile");
+        toast.error(error.message || "Failed to load profile");
       } finally {
         setLoading(false);
       }

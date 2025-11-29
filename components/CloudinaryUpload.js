@@ -8,17 +8,44 @@ export default function CloudinaryUpload({ onUploadComplete, currentImage }) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentImage || null);
 
+  // ----------- IMAGE COMPRESSION FUNCTION -----------
+  const compressImage = (file, maxWidth = 1000, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image(); // FIXED
+      img.src = URL.createObjectURL(file);
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scaleSize = maxWidth / img.width;
+
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+
+      img.onerror = (err) => reject(err);
+    });
+  };
+
   const handleUpload = async (e) => {
-    const file = e.target.files[0];
+    let file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size must be less than 5MB");
       return;
@@ -26,8 +53,14 @@ export default function CloudinaryUpload({ onUploadComplete, currentImage }) {
 
     setUploading(true);
 
+    // ------- COMPRESS IMAGE BEFORE UPLOAD -------
+    const compressedBlob = await compressImage(file);
+    const compressedFile = new File([compressedBlob], file.name, {
+      type: "image/jpeg",
+    });
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", compressedFile);
 
     try {
       const res = await fetch("/api/upload", {
@@ -37,15 +70,13 @@ export default function CloudinaryUpload({ onUploadComplete, currentImage }) {
 
       const data = await res.json();
 
-      if (!res.ok || !data.url) {
-        throw new Error("Upload failed");
-      }
+      if (!res.ok || !data.url) throw new Error("Upload failed");
 
       setPreviewUrl(data.url);
       onUploadComplete(data.url);
+
       toast.success("Image uploaded successfully!");
     } catch (error) {
-      console.error("Upload error:", error);
       toast.error("Upload failed. Please try again.");
     } finally {
       setUploading(false);
@@ -66,10 +97,8 @@ export default function CloudinaryUpload({ onUploadComplete, currentImage }) {
       <label
         htmlFor="horse-image-upload"
         className={`block w-full text-sm text-gray-700 border-2 border-dashed border-gray-300 
-          rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 
-          transition-colors ${
-            uploading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+        rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 transition-colors
+        ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         {uploading ? (
           <div className="flex items-center justify-center gap-2">

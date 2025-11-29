@@ -47,7 +47,6 @@ const AdminDeleteUser = ({ params }) => {
         const data = await res.json();
         setUser(data);
       } catch (err) {
-        console.error("Failed to fetch user", err);
         toast.error("Failed to load user");
         router.push("/dashboard/vet/users");
       } finally {
@@ -76,7 +75,6 @@ const AdminDeleteUser = ({ params }) => {
       toast.success("User deleted successfully!");
       router.push("/dashboard/vet/all-users");
     } catch (error) {
-      console.error("Error deleting user:", error);
       toast.error(error.message || "Failed to delete user");
       setDeleting(false);
       setShowDialog(false);

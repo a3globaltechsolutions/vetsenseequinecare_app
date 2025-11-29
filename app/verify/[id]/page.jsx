@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 export default function VerifyDocumentPage() {
   const params = useParams();
@@ -26,7 +27,7 @@ export default function VerifyDocumentPage() {
           setVerificationStatus("invalid");
         }
       } catch (error) {
-        console.error("Verification error:", error);
+        toast.error("Verification error");
         setVerificationStatus("error");
       } finally {
         setLoading(false);

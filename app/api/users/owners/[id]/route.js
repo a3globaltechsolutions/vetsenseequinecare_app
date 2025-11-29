@@ -47,7 +47,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(owner);
   } catch (error) {
-    console.error("Error fetching owner:", error);
     return NextResponse.json(
       { error: "Failed to fetch owner" },
       { status: 500 }
@@ -135,7 +134,6 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(owner);
   } catch (error) {
-    console.error("Error updating owner:", error);
     return NextResponse.json(
       { error: "Failed to update owner" },
       { status: 500 }
@@ -195,7 +193,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Owner deleted successfully" });
   } catch (error) {
-    console.error("Error deleting owner:", error);
     return NextResponse.json(
       { error: "Failed to delete owner" },
       { status: 500 }

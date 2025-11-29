@@ -111,7 +111,6 @@ export default function EditHorsePage() {
         router.push("/dashboard/vet");
       }
     } catch (error) {
-      console.error("Error fetching horse:", error);
       toast.error("Failed to load horse");
     } finally {
       setLoading(false);
@@ -148,7 +147,6 @@ export default function EditHorsePage() {
         toast.error(data.error || "Failed to update horse");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setSaving(false);

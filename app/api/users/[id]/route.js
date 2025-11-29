@@ -13,7 +13,6 @@ export async function GET(req, { params }) {
   }
 
   try {
-    // Await params in Next.js 15+
     const { id } = await params;
 
     const user = await prisma.user.findUnique({
@@ -32,7 +31,7 @@ export async function GET(req, { params }) {
 
         ownedHorses: {
           select: {
-            id: true, // Ownership record ID
+            id: true,
             startDate: true,
             endDate: true,
             horse: {
@@ -40,9 +39,10 @@ export async function GET(req, { params }) {
                 id: true,
                 name: true,
                 breed: true,
-                age: true,
+                // age: true,  ❌ REMOVED (not in schema)
                 color: true,
                 sex: true,
+                dob: true, // ✅ you can use DOB instead
               },
             },
           },
@@ -67,7 +67,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error fetching user details:", error);
     return NextResponse.json(
       { error: "Failed to fetch user details" },
       { status: 500 }
@@ -202,7 +201,6 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error("Error updating user:", error);
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500 }
@@ -266,7 +264,6 @@ export async function DELETE(req, { params }) {
       },
     });
   } catch (error) {
-    console.error("Error deleting user:", error);
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 }

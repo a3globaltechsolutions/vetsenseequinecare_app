@@ -28,7 +28,6 @@ export async function GET() {
 
     return NextResponse.json({ passportNo });
   } catch (error) {
-    console.error("Error generating passport number:", error);
     return NextResponse.json(
       { error: "Failed to generate passport number" },
       { status: 500 }

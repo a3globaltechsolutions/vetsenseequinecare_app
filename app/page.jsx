@@ -53,7 +53,7 @@ export default function HomePage() {
                 Get Started
               </Button>
             </Link>
-            <Link href="/verify/demo">
+            <Link href="/auth/login">
               <Button size="lg" variant="outline">
                 Verify Document
               </Button>
@@ -139,8 +139,18 @@ export default function HomePage() {
             &quot;Our passion to care fuels our penchant to serve&quot;
           </p>
           <p className="text-sm">
-            📞 07067677446 • ✉ Vetsense.equinecare@gmail.com • 📍 Kaduna,
-            Nigeria
+            <Link
+              href="https://wa.me/2347067677446"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📞 07067677446
+            </Link>{" "}
+            •{" "}
+            <a href="mailto:Vetsense.equinecare@gmail.com">
+              ✉ vetsense.equinecare@gmail.com
+            </a>{" "}
+            • 📍 Kaduna, Nigeria
           </p>
         </footer>
       </main>

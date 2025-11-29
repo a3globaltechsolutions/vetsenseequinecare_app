@@ -59,7 +59,7 @@ export default function EditVaccinationPage() {
         }
       }
     } catch (error) {
-      console.error("Error fetching vet:", error);
+      toast.error("Error fetching vet:", error);
     }
   };
 
@@ -86,7 +86,6 @@ export default function EditVaccinationPage() {
         notes: data.notes || "",
       });
     } catch (error) {
-      console.error(error);
       toast.error("Failed to load vaccination");
     } finally {
       setLoading(false);
@@ -136,7 +135,6 @@ export default function EditVaccinationPage() {
       router.push(`/horses/${params.id}`);
       router.refresh();
     } catch (error) {
-      console.error(error);
       toast.error("Failed to update");
     } finally {
       setSaving(false);

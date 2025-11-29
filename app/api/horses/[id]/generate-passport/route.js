@@ -137,7 +137,6 @@ export async function POST(req, context) {
       },
     });
   } catch (error) {
-    console.error("❌ Passport generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate passport", details: error.message },
       { status: 500 }

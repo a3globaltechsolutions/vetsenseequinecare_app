@@ -68,7 +68,6 @@ export async function POST(request, { params }) {
 
     return NextResponse.json(medicalRecord, { status: 201 });
   } catch (error) {
-    console.error("Error creating medical record:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -101,7 +100,6 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(medicalRecords);
   } catch (error) {
-    console.error("Error fetching medical records:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

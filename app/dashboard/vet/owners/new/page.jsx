@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,9 @@ import toast from "react-hot-toast";
 
 export default function NewOwnerPage() {
   const router = useRouter();
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -63,26 +66,95 @@ export default function NewOwnerPage() {
     "Zamfara",
   ];
 
+  // Fetch all users
+  useEffect(() => {
+    async function fetchUsers() {
+      setLoadingUsers(true);
+      try {
+        const res = await fetch("/api/users"); // Your GET route
+        const data = await res.json();
+
+        // Filter users that are NOT owners
+        const filtered = data.filter((u) => u.role !== "OWNER");
+
+        setUsers(filtered);
+      } catch (error) {
+        toast.error("Could not load users");
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+
+    fetchUsers();
+  }, []);
+
+  const handleUserSelect = async (userId) => {
+    setSelectedUserId(userId);
+
+    if (!userId) {
+      // Clear the form if no user selected
+      setFormData({
+        name: "",
+        title: "",
+        email: "",
+        phone: "",
+        address: "",
+        state: "",
+        country: "Nigeria",
+        password: "",
+      });
+      return;
+    }
+
+    try {
+      // Fetch full details of the selected user
+      const res = await fetch(`/api/users/${userId}`);
+      const data = await res.json();
+
+      if (res.ok && data) {
+        setFormData({
+          name: data.name || "",
+          title: data.title || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+          state: data.state || "",
+          country: data.country || "Nigeria",
+          password: "", // don't auto-fill password
+        });
+      }
+    } catch (error) {
+      toast.error("Error fetching user");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.password.trim()
-    ) {
-      toast.error("Name, email, and password are required");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
+      if (selectedUserId) {
+        // UPDATE EXISTING USER → convert to OWNER
+        const res = await fetch(`/api/users/${selectedUserId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            role: "OWNER",
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          toast.success("Existing user converted to Owner");
+          router.push("/dashboard/vet/owners");
+        } else {
+          toast.error(data.error || "Failed to update user");
+        }
+        return;
+      }
+
+      // OTHERWISE → CREATE NEW OWNER
       const res = await fetch("/api/users/owners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,17 +162,14 @@ export default function NewOwnerPage() {
       });
 
       const data = await res.json();
-
       if (res.ok) {
-        toast.success("Owner created successfully!");
+        toast.success("New owner created successfully!");
         router.push("/dashboard/vet/owners");
-        router.refresh();
       } else {
         toast.error(data.error || "Failed to create owner");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
+    } catch (err) {
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -132,6 +201,31 @@ export default function NewOwnerPage() {
         <Card className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+              {/* Select Existing User */}
+              <div>
+                <Label>Select Existing User</Label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => handleUserSelect(e.target.value)}
+                  className="w-full mt-1 border p-2 rounded-md"
+                >
+                  <option value="">-- Choose a user (optional) --</option>
+                  {loadingUsers ? (
+                    <option>Loading...</option>
+                  ) : (
+                    users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} — {u.email}
+                      </option>
+                    ))
+                  )}
+                </select>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecting a user will auto-fill the form.
+                </p>
+              </div>
+
               {/* Name */}
               <div>
                 <Label htmlFor="name">

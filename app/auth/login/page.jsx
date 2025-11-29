@@ -152,7 +152,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8 pt-6 border-t text-center text-xs text-gray-500">
-          <p>VETSENSE Equine Care & Consulting</p>
+          <p>Vetsense Equine Care & Consulting</p>
           <p className="mt-1 italic">
             &quot;Our passion to care fuels our penchant to serve&quot;
           </p>

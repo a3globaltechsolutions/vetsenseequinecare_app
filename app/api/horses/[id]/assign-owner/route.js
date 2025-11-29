@@ -101,7 +101,6 @@ export async function POST(req, { params }) {
 
     return NextResponse.json(ownership, { status: 201 });
   } catch (error) {
-    console.error("Error assigning owner:", error);
     return NextResponse.json(
       { error: "Failed to assign owner" },
       { status: 500 }
@@ -173,7 +172,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Owner removed successfully" });
   } catch (error) {
-    console.error("Error removing owner:", error);
     return NextResponse.json(
       { error: "Failed to remove owner" },
       { status: 500 }

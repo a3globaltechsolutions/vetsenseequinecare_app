@@ -28,7 +28,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(vaccination);
   } catch (error) {
-    console.error("Error fetching vaccination:", error);
     return NextResponse.json(
       { error: "Failed to fetch vaccination" },
       { status: 500 }
@@ -75,7 +74,6 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(vaccination);
   } catch (error) {
-    console.error("Error updating vaccination:", error);
     return NextResponse.json(
       { error: "Failed to update vaccination" },
       { status: 500 }
@@ -123,7 +121,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Vaccination deleted successfully" });
   } catch (error) {
-    console.error("Error deleting vaccination:", error);
     return NextResponse.json(
       { error: "Failed to delete vaccination" },
       { status: 500 }

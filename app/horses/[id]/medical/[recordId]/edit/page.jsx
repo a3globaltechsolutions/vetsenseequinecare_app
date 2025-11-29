@@ -55,7 +55,6 @@ export default function EditMedicalRecordPage() {
         attachments: data.attachments || [],
       });
     } catch (error) {
-      console.error("Error fetching record:", error);
       toast.error("Failed to load record");
     } finally {
       setLoading(false);
@@ -106,7 +105,6 @@ export default function EditMedicalRecordPage() {
         toast.error(data.error || "Failed to update medical record");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setSaving(false);

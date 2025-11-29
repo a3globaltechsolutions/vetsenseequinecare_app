@@ -70,7 +70,6 @@ export async function GET(req) {
 
     return NextResponse.json(horses);
   } catch (error) {
-    console.error("Error fetching horses:", error);
     return NextResponse.json(
       { error: "Failed to fetch horses" },
       { status: 500 }
@@ -158,7 +157,6 @@ export async function POST(req) {
 
     return NextResponse.json(horse, { status: 201 });
   } catch (error) {
-    console.error("Error creating horse:", error);
     return NextResponse.json(
       { error: "Failed to create horse" },
       { status: 500 }

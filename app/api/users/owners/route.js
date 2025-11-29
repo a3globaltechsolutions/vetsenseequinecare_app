@@ -36,7 +36,6 @@ export async function GET(req) {
 
     return NextResponse.json(owners);
   } catch (error) {
-    console.error("Error fetching owners:", error);
     return NextResponse.json(
       { error: "Failed to fetch owners" },
       { status: 500 }
@@ -115,7 +114,6 @@ export async function POST(req) {
 
     return NextResponse.json(owner, { status: 201 });
   } catch (error) {
-    console.error("Error creating owner:", error);
     return NextResponse.json(
       { error: "Failed to create owner" },
       { status: 500 }

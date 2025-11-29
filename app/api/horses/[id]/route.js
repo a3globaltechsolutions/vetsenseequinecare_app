@@ -63,7 +63,6 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(horse);
   } catch (error) {
-    console.error("Error fetching horse:", error);
     return NextResponse.json(
       { error: "Failed to fetch horse" },
       { status: 500 }
@@ -147,7 +146,6 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(horse);
   } catch (error) {
-    console.error("Error updating horse:", error);
     return NextResponse.json(
       { error: "Failed to update horse" },
       { status: 500 }
@@ -190,7 +188,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Horse deleted successfully" });
   } catch (error) {
-    console.error("Error deleting horse:", error);
     return NextResponse.json(
       { error: "Failed to delete horse" },
       { status: 500 }

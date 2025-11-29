@@ -42,7 +42,6 @@ export async function GET(req) {
 
     return NextResponse.json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
       { status: 500 }
@@ -70,7 +69,7 @@ export async function POST(req) {
     }
 
     // Validate role
-    if (!["OWNER", "VET", "ASSISTANT"].includes(data.role)) {
+    if (!["OWNER", "VET"].includes(data.role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -129,7 +128,6 @@ export async function POST(req) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    console.error("Error creating user:", error);
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

@@ -38,7 +38,6 @@ export default function AssignOwnerDialog({
       const data = await res.json();
       setOwners(data);
     } catch (error) {
-      console.error("Error fetching owners:", error);
       toast.error("Failed to load owners");
     }
   };
@@ -71,7 +70,6 @@ export default function AssignOwnerDialog({
         toast.error(data.error || "Failed to assign owner");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred");
     } finally {
       setLoading(false);
@@ -104,7 +102,6 @@ export default function AssignOwnerDialog({
         toast.error(data.error || "Failed to remove owner");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred");
     }
   };

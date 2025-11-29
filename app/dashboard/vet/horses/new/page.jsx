@@ -95,7 +95,6 @@ export default function NewHorsePage() {
         toast.error(data.error || "Failed to add horse");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
