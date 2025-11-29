@@ -19,12 +19,19 @@ export async function POST(req, context) {
   }
 
   try {
-    // Get horse data with owners
+    // FIXED: Get horse data with ALL necessary relations
     const horse = await prisma.horse.findUnique({
       where: { id: params.id },
       include: {
         owners: {
           include: { owner: true },
+        },
+        // ✅ ADD THESE TWO INCLUDES
+        vaccinations: {
+          orderBy: { dateGiven: "desc" },
+        },
+        medicalRecords: {
+          orderBy: { recordDate: "desc" },
         },
       },
     });
@@ -53,16 +60,18 @@ export async function POST(req, context) {
 
     const passportNo = `VETSENSE-E-${year}-${seq.toString().padStart(3, "0")}`;
 
-    // Generate PDF
-    const pdf = await generatePassport(
-      horse,
-      {
-        name: "Dr. Simpa Muhammad AbdulAzeez",
-        title: "DVM, 8829",
-        practice: "VETSENSE Equine Care and Consulting",
-      },
-      passportNo
-    );
+    // Get vet data (either from session or default)
+    const vetData = {
+      name: session.user.name || "Dr. Simpa Muhammad AbdulAzeez",
+      title: session.user.title || "DVM, 8829",
+      practice: "Vetsense Equine Care and Consulting",
+      phone: session.user.phone || "07067677446",
+      email: session.user.email || "Vetsense.equinecare@gmail.com",
+      address: session.user.address || "Kaduna, Nigeria",
+    };
+
+    // Generate PDF with complete data
+    const pdf = await generatePassport(horse, vetData, passportNo);
 
     // Convert PDF to buffer
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
@@ -91,14 +100,16 @@ export async function POST(req, context) {
         horseId: horse.id,
         type: "PASSPORT",
         passportNo: passportNo,
-        fileUrl: uploadResult.data.url, // UploadThing URL
+        fileUrl: uploadResult.data.url, // FIXED: Changed from ufsUrl to url
         fingerprint: fingerprint,
         metadata: {
           generated: new Date().toISOString(),
           vetId: session.user.id,
           horseName: horse.name,
           generatedBy: session.user.name,
-          uploadthingKey: uploadResult.data.key, // Store for deletion later
+          uploadthingKey: uploadResult.data.key,
+          vaccinationCount: horse.vaccinations?.length || 0,
+          medicalRecordCount: horse.medicalRecords?.length || 0,
         },
       },
     });
@@ -109,7 +120,9 @@ export async function POST(req, context) {
         userId: session.user.id,
         horseId: horse.id,
         action: "PASSPORT_GENERATED",
-        details: `Generated passport ${passportNo} for ${horse.name}`,
+        details: `Generated passport ${passportNo} for ${horse.name} (${
+          horse.vaccinations?.length || 0
+        } vaccinations, ${horse.medicalRecords?.length || 0} medical records)`,
       },
     });
 
@@ -118,9 +131,13 @@ export async function POST(req, context) {
       document: document,
       downloadUrl: uploadResult.data.url,
       passportNo: passportNo,
+      stats: {
+        vaccinations: horse.vaccinations?.length || 0,
+        medicalRecords: horse.medicalRecords?.length || 0,
+      },
     });
   } catch (error) {
-    console.error("Passport generation error:", error);
+    console.error("❌ Passport generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate passport", details: error.message },
       { status: 500 }

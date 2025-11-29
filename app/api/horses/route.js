@@ -18,7 +18,7 @@ export async function GET(req) {
       // Vet sees all horses
       horses = await prisma.horse.findMany({
         include: {
-          vaccinations: true, // 👈 ADD THIS
+          vaccinations: true,
           medicalRecords: true,
           owners: {
             include: {
