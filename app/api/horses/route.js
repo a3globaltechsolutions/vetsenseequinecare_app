@@ -20,7 +20,31 @@ export async function GET(req) {
     if (session.user.role === "VET") {
       // Vet sees all horses
       horses = await prisma.horse.findMany({
-        include: {
+        select: {
+          id: true,
+          name: true,
+          breed: true,
+          dob: true, // ✅ Only dob, not age
+          color: true,
+          sex: true,
+          microchip: true,
+          imageUrl: true,
+          countryOfBirth: true,
+          status: true,
+          sire: true,
+          dam: true,
+          bloodType: true,
+          allergies: true,
+          currentMedications: true,
+          dietary: true,
+          behavior: true,
+          exerciseRestrictions: true,
+          weight: true,
+          bodyConditionScore: true,
+          lastDeworming: true,
+          insurance: true,
+          createdAt: true,
+          updatedAt: true,
           vaccinations: {
             orderBy: { dateGiven: "desc" },
           },
