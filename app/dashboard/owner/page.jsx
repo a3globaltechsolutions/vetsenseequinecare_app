@@ -60,6 +60,15 @@ export default function OwnerDashboard() {
     return session?.user?.name?.charAt(0).toUpperCase() || "O";
   };
 
+  // Calc age
+  function calculateAge(dob) {
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    const ageInMs = new Date().getTime() - birthDate.getTime();
+    const ageInYears = ageInMs / (1000 * 60 * 60 * 24 * 365.25);
+    return Math.floor(ageInYears); // or Math.round(ageInYears) to round
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -453,7 +462,9 @@ export default function OwnerDashboard() {
                       </div>
                       <p className="text-gray-600 text-sm mb-3">
                         {horse.breed || "Unknown breed"} •{" "}
-                        {horse.age ? `${horse.age} years` : "Age unknown"}
+                        {horse.dob
+                          ? `${calculateAge(horse.dob)} years`
+                          : "Age unknown"}
                       </p>
 
                       {/* Vaccination Reminder */}
