@@ -176,26 +176,76 @@ export default function HorseDetailPage() {
     }
   };
 
+  // Fixed handleGeneratePassport function
   const handleGeneratePassport = async () => {
     setGeneratingPassport(true);
 
+    const toastId = toast.loading("Generating passport...");
+
     try {
+      // ✅ FIXED: Proper template literal syntax
       const res = await fetch(`/api/horses/${params.id}/generate-passport`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Add timeout handling
+        signal: AbortSignal.timeout(60000), // 60 second timeout
       });
+
+      // Check if response is ok before parsing
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = {
+            error: `Server error: ${res.status}`,
+            details: errorText,
+          };
+        }
+        throw new Error(
+          errorData.details || errorData.error || "Failed to generate passport"
+        );
+      }
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        toast.success(`Passport generated: ${data.passportNo}`);
+      if (data.success) {
+        toast.success(`Passport generated: ${data.passportNo}`, {
+          id: toastId,
+          duration: 5000,
+        });
+
+        // Open in new tab
         window.open(data.downloadUrl, "_blank");
-        fetchHorse(); // Refresh horse data
-        fetchDocuments(); // Refresh documents
+
+        // Refresh data
+        await Promise.all([fetchHorse(), fetchDocuments()]);
       } else {
-        toast.error(data.error || "Failed to generate passport");
+        throw new Error(data.error || "Failed to generate passport");
       }
     } catch (error) {
-      toast.error("Error generating passport");
+      console.error("Passport generation error:", error);
+
+      // More specific error messages
+      let errorMessage = "Error generating passport";
+
+      if (error.name === "AbortError" || error.name === "TimeoutError") {
+        errorMessage =
+          "Request timeout - passport generation is taking too long. Please try again.";
+      } else if (error.message.includes("timeout")) {
+        errorMessage =
+          "Server timeout - the passport is being generated but taking longer than expected.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage, {
+        id: toastId,
+        duration: 7000,
+      });
     } finally {
       setGeneratingPassport(false);
     }
