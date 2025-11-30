@@ -5,12 +5,112 @@ import QRCode from "qrcode";
 import fs from "fs";
 import path from "path";
 
+/**
+ * Server-side PDF generator with image compression.
+ *
+ * Notes:
+ * - For best results install `sharp` in your project: npm i sharp
+ * - If `sharp` isn't available, compression falls back to embedding original images.
+ */
+
+const MAX_IMAGE_WIDTH = 1200; // pixels - downscale very large images
+const JPEG_QUALITY = 70; // 0-100
+
+async function tryCompressBuffer(buffer, mimeType) {
+  // Try to use sharp for server-side resizing/compression.
+  try {
+    // dynamic require so code doesn't crash if sharp absent
+    const sharp = require("sharp");
+
+    const img = sharp(buffer);
+    const metadata = await img.metadata();
+
+    // If it's already small, just convert to jpeg with quality only
+    const shouldResize = metadata.width && metadata.width > MAX_IMAGE_WIDTH;
+
+    let pipeline = img;
+    if (shouldResize) {
+      pipeline = pipeline.resize({
+        width: MAX_IMAGE_WIDTH,
+        withoutEnlargement: true,
+      });
+    }
+
+    // convert to jpeg for photos (smaller)
+    const jpegBuffer = await pipeline
+      .jpeg({ quality: JPEG_QUALITY })
+      .toBuffer();
+    return { buffer: jpegBuffer, mime: "image/jpeg" };
+  } catch (err) {
+    // sharp not available or conversion failed; fallback
+    return { buffer, mime: mimeType };
+  }
+}
+
+function bufferToDataUrl(buffer, mime) {
+  const b64 = buffer.toString("base64");
+  return `data:${mime};base64,${b64}`;
+}
+
+async function compressAndDataUrlFromBuffer(buffer, originalMime) {
+  const { buffer: compressed, mime } = await tryCompressBuffer(
+    buffer,
+    originalMime
+  );
+  return bufferToDataUrl(compressed, mime);
+}
+
+async function fetchImageAsDataUrl(url) {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch image: ${res.status}`);
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Determine content type if available
+    const contentType = res.headers.get("content-type") || "image/png";
+    return await compressAndDataUrlFromBuffer(buffer, contentType);
+  } catch (err) {
+    return null;
+  }
+}
+
+async function loadLocalImageDataUrl(filePathCandidates = []) {
+  for (const p of filePathCandidates) {
+    try {
+      if (fs.existsSync(p)) {
+        const buffer = fs.readFileSync(p);
+        const ext = path.extname(p).toLowerCase();
+        const mime =
+          ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : "image/png";
+        return await compressAndDataUrlFromBuffer(buffer, mime);
+      }
+    } catch (err) {
+      console.warn(
+        "loadLocalImageDataUrl error reading",
+        p,
+        err.message || err
+      );
+    }
+  }
+  return null;
+}
+
 export async function generatePassport(
   horseData = {},
   vetData = {},
   passportNo
 ) {
-  const doc = new jsPDF();
+  // Enable jsPDF compression and reduce float precision
+  const doc = new jsPDF({
+    compress: true,
+    putOnlyUsedFonts: true,
+    floatPrecision: 2,
+  });
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -64,24 +164,15 @@ export async function generatePassport(
       const vaccineName = (v.vaccineName || "").toLowerCase().trim();
       const search = searchName.toLowerCase().trim();
 
-      if (vaccineName === search) {
+      if (vaccineName === search) return true;
+      if (vaccineName.includes(search) || search.includes(vaccineName))
         return true;
-      }
-
-      if (vaccineName.includes(search) || search.includes(vaccineName)) {
-        return true;
-      }
 
       const keywords = search.split(" ");
       const matchedKeywords = keywords.filter(
         (keyword) => vaccineName.includes(keyword) && keyword.length > 3
       );
-
-      if (matchedKeywords.length > 0) {
-        return true;
-      }
-
-      return false;
+      return matchedKeywords.length > 0;
     });
 
     return found;
@@ -111,17 +202,10 @@ export async function generatePassport(
   };
 
   const getPiroplasmosisTreatment = () => {
-    const piroRecord = sortedMedicalRecords.find(
-      (r) =>
-        (r.diagnosis || "").toLowerCase().includes("piroplasmosis") ||
-        (r.diagnosis || "").toLowerCase().includes("babesiosis") ||
-        (r.diagnosis || "").toLowerCase().includes("piro")
+    const piroRecord = sortedMedicalRecords.find((r) =>
+      ((r.diagnosis || "") + "").toLowerCase().includes("piro")
     );
-
-    if (!piroRecord) {
-      return null;
-    }
-
+    if (!piroRecord) return null;
     return {
       date: formatDate(piroRecord.recordDate),
       drug: piroRecord.drug || "Not specified",
@@ -133,64 +217,21 @@ export async function generatePassport(
     };
   };
 
-  async function fetchImageAsDataUrl(url) {
-    if (!url) return null;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-    const arrayBuffer = await res.arrayBuffer();
-    let base64;
-    if (typeof window === "undefined") {
-      base64 = Buffer.from(arrayBuffer).toString("base64");
-    } else {
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = "";
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      base64 = btoa(binary);
-    }
-    const contentType = res.headers.get("content-type") || "image/png";
-    return `data:${contentType};base64,${base64}`;
-  }
-
+  // -------------------------
+  // Image loading & compression
+  // -------------------------
   async function loadLocalLogo() {
     const publicDir = path.join(process.cwd(), "public");
     const jpgPath = path.join(publicDir, "vetsense_logo.jpg");
     const pngPath = path.join(publicDir, "vetsense_logo.png");
-
-    try {
-      if (fs.existsSync(jpgPath)) {
-        const buffer = fs.readFileSync(jpgPath);
-        return `data:image/jpeg;base64,${buffer.toString("base64")}`;
-      } else if (fs.existsSync(pngPath)) {
-        const buffer = fs.readFileSync(pngPath);
-        return `data:image/png;base64,${buffer.toString("base64")}`;
-      } else {
-        return null;
-      }
-    } catch (err) {
-      return null;
-    }
+    return await loadLocalImageDataUrl([jpgPath, pngPath]);
   }
 
   async function loadSignature() {
     const publicDir = path.join(process.cwd(), "public");
     const pngPath = path.join(publicDir, "sign.png");
     const jpgPath = path.join(publicDir, "sign.jpg");
-
-    try {
-      if (fs.existsSync(pngPath)) {
-        const buffer = fs.readFileSync(pngPath);
-        return `data:image/png;base64,${buffer.toString("base64")}`;
-      } else if (fs.existsSync(jpgPath)) {
-        const buffer = fs.readFileSync(jpgPath);
-        return `data:image/jpeg;base64,${buffer.toString("base64")}`;
-      } else {
-        return null;
-      }
-    } catch (err) {
-      return null;
-    }
+    return await loadLocalImageDataUrl([pngPath, jpgPath]);
   }
 
   async function fetchCircularSealUrl() {
@@ -219,14 +260,9 @@ export async function generatePassport(
     const centerX = pageWidth / 2 - logoWidth / 2;
     const centerY = 18;
 
-    doc.addImage(
-      logoDataUrl,
-      logoDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG",
-      centerX,
-      centerY,
-      logoWidth,
-      logoHeight
-    );
+    // Prefer JPEG images for photos; jsPDF will accept data URL with MIME
+    const imgType = logoDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+    doc.addImage(logoDataUrl, imgType, centerX, centerY, logoWidth, logoHeight);
 
     doc.setDrawColor(122, 31, 162);
     doc.setLineWidth(1);
@@ -248,17 +284,13 @@ export async function generatePassport(
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
   doc.text(
-    `${vetData.name || "Dr. Simpa Muhammad AbdulAzeez"} (${
-      vetData.title || "8829"
-    })`,
+    `Dr. ${vetData.name || "Dr. Simpa Muhammad AbdulAzeez"} (${"DVM, 8829"})`,
     pageWidth / 2,
     125,
-    {
-      align: "center",
-    }
+    { align: "center" }
   );
   doc.text(
-    vetData.practice || "VETSENSE Equine Care and Consulting",
+    vetData.practice || "Vetsense Equine Care and Consulting",
     pageWidth / 2,
     135,
     { align: "center" }
@@ -273,7 +305,7 @@ export async function generatePassport(
   doc.setFontSize(9);
   doc.text(
     `${vetData.phone || "07067677446"} | ${
-      vetData.email || "Vetsense.equinecare@gmail.com"
+      vetData.email || "vetsense.equinecare@gmail.com"
     }`,
     pageWidth / 2,
     165,
@@ -292,7 +324,9 @@ export async function generatePassport(
     doc.text("Chat with us on WhatsApp", pageWidth / 2, 227, {
       align: "center",
     });
-  } catch (error) {}
+  } catch (error) {
+    console.warn("QR code generation failed:", error);
+  }
 
   // -------------------------
   // MAIN SECTIONS
@@ -328,11 +362,14 @@ export async function generatePassport(
     {
       title: "3. Veterinary Information",
       fields: [
-        ["Primary Vet", vetData.name || "Dr. Simpa Muhammad AbdulAzeez"],
-        ["Vet License No.", vetData.title || "8829"],
+        [
+          "Primary Vet",
+          `Dr. ${vetData.name}` || "Dr. Simpa Muhammad AbdulAzeez",
+        ],
+        ["Vet License No.", "DVM 8829" || "8829"],
         [
           "Practice Name",
-          vetData.practice || "VETSENSE Equine Care and Consulting",
+          vetData.practice || "Vetsense Equine Care and Consulting",
         ],
         ["Vet Contact", vetData.phone || "07067677446"],
         [
@@ -409,7 +446,7 @@ export async function generatePassport(
     doc.setFontSize(11);
     doc.setTextColor(122, 31, 162);
     doc.text(
-      vetData.practice || "VETSENSE Equine Care and Consulting",
+      vetData.practice || "Vetsense Equine Care and Consulting",
       pageWidth / 2,
       20,
       { align: "center" }
@@ -452,7 +489,7 @@ export async function generatePassport(
   }
 
   // -------------------------
-  // Certificate Pages
+  // CERTIFICATE PAGES
   // -------------------------
   const circularSealUrl = await fetchCircularSealUrl().catch(() => null);
   const circularSealDataUrl = circularSealUrl
@@ -465,7 +502,7 @@ export async function generatePassport(
     doc.setFontSize(11);
     doc.setTextColor(122, 31, 162);
     doc.text(
-      vetData.practice || "VETSENSE Equine Care and Consulting",
+      vetData.practice || "Vetsense Equine Care and Consulting",
       pageWidth / 2,
       20,
       { align: "center" }
@@ -504,14 +541,10 @@ export async function generatePassport(
     if (signatureDataUrl) {
       const sigWidth = 80;
       const sigHeight = 30;
-      doc.addImage(
-        signatureDataUrl,
-        signatureDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG",
-        20,
-        sigY,
-        sigWidth,
-        sigHeight
-      );
+      const sigType = signatureDataUrl.startsWith("data:image/jpeg")
+        ? "JPEG"
+        : "PNG";
+      doc.addImage(signatureDataUrl, sigType, 20, sigY, sigWidth, sigHeight);
       doc.text("Signature", 20 + sigWidth / 2, sigY + sigHeight + 5, {
         align: "center",
       });
@@ -520,9 +553,9 @@ export async function generatePassport(
     }
 
     doc.text(
-      `Vet: ${vetData.name || "Dr. Simpa Muhammad AbdulAzeez"} (${
-        vetData.title || "8829"
-      })`,
+      `Vet: ${vetData.title}. ${
+        vetData.name || "Dr. Simpa Muhammad AbdulAzeez"
+      } (${vetData.titles || "DVM 8829"})`,
       20,
       sigY + (signatureDataUrl ? 40 : 10)
     );
@@ -603,7 +636,7 @@ export async function generatePassport(
   doc.setFontSize(11);
   doc.setTextColor(122, 31, 162);
   doc.text(
-    vetData.practice || "VETSENSE Equine Care and Consulting",
+    vetData.practice || "Vetsense Equine Care and Consulting",
     pageWidth / 2,
     20,
     { align: "center" }
@@ -663,14 +696,10 @@ export async function generatePassport(
   if (signatureDataUrl) {
     const sigWidth = 100;
     const sigHeight = 40;
-    doc.addImage(
-      signatureDataUrl,
-      signatureDataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG",
-      20,
-      valSigY,
-      sigWidth,
-      sigHeight
-    );
+    const sigType = signatureDataUrl.startsWith("data:image/jpeg")
+      ? "JPEG"
+      : "PNG";
+    doc.addImage(signatureDataUrl, sigType, 20, valSigY, sigWidth, sigHeight);
     doc.text("Signature", 20 + sigWidth / 2, valSigY + sigHeight + 5, {
       align: "center",
     });
@@ -679,14 +708,14 @@ export async function generatePassport(
   }
 
   doc.text(
-    `${vetData.name || "Dr. Simpa Muhammad AbdulAzeez"} (DVM, ${
-      vetData.title || "8829"
+    `Dr. ${vetData.name || "Dr. Simpa Muhammad AbdulAzeez"} (${
+      vetData.titles || "DVM 8829"
     })`,
     20,
     valSigY + (signatureDataUrl ? 50 : 10)
   );
   doc.text(
-    vetData.practice || "VETSENSE Equine Care and Consulting",
+    vetData.practice || "Vetsense Equine Care and Consulting",
     20,
     valSigY + (signatureDataUrl ? 60 : 20)
   );
@@ -720,7 +749,9 @@ export async function generatePassport(
       20,
       valSigY + (signatureDataUrl ? 155 : 115)
     );
-  } catch (error) {}
+  } catch (error) {
+    console.warn("Verification QR code generation failed:", error);
+  }
 
   if (circularSealDataUrl) {
     const sW = 68,
@@ -735,5 +766,6 @@ export async function generatePassport(
     );
   }
 
+  // Return the jsPDF document instance
   return doc;
 }
