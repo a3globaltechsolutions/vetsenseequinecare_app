@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "app/api/horses/[id]/generate-passport/route.js": {
-      "maxDuration": 60,
-      "memory": 3008
-    }
-  }
-}
