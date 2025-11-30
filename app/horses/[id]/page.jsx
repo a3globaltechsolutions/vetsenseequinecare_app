@@ -227,8 +227,6 @@ export default function HorseDetailPage() {
         throw new Error(data.error || "Failed to generate passport");
       }
     } catch (error) {
-      console.error("Passport generation error:", error);
-
       // More specific error messages
       let errorMessage = "Error generating passport";
 

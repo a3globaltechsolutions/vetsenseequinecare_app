@@ -1,149 +1,3 @@
-// // app/api/horses/[id]/generate-passport/route.js
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-// import { PrismaClient } from "@prisma/client";
-// import { NextResponse } from "next/server";
-// import { generatePassport } from "@/lib/pdf/passportGenerator";
-// import { UTApi } from "uploadthing/server";
-// import crypto from "crypto";
-
-// const prisma = new PrismaClient();
-// const utapi = new UTApi();
-
-// export async function POST(req, context) {
-//   const params = await context.params;
-//   const session = await getServerSession(authOptions);
-
-//   if (!session || session.user.role !== "VET") {
-//     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//   }
-
-//   try {
-//     // FIXED: Get horse data with ALL necessary relations
-//     const horse = await prisma.horse.findUnique({
-//       where: { id: params.id },
-//       include: {
-//         owners: {
-//           include: { owner: true },
-//         },
-//         // ✅ ADD THESE TWO INCLUDES
-//         vaccinations: {
-//           orderBy: { dateGiven: "desc" },
-//         },
-//         medicalRecords: {
-//           orderBy: { recordDate: "desc" },
-//         },
-//       },
-//     });
-
-//     if (!horse) {
-//       return NextResponse.json({ error: "Horse not found" }, { status: 404 });
-//     }
-
-//     // Get next passport number
-//     const year = new Date().getFullYear();
-//     const lastPassport = await prisma.document.findFirst({
-//       where: {
-//         type: "PASSPORT",
-//         passportNo: {
-//           startsWith: `VETSENSE-E-${year}-`,
-//         },
-//       },
-//       orderBy: { createdAt: "desc" },
-//     });
-
-//     let seq = 1;
-//     if (lastPassport && lastPassport.passportNo) {
-//       const parts = lastPassport.passportNo.split("-");
-//       seq = parseInt(parts[3]) + 1;
-//     }
-
-//     const passportNo = `VETSENSE-E-${year}-${seq.toString().padStart(3, "0")}`;
-
-//     // Get vet data (either from session or default)
-//     const vetData = {
-//       name: session.user.name || "Dr. Simpa Muhammad AbdulAzeez",
-//       title: session.user.title || "DVM, 8829",
-//       practice: "Vetsense Equine Care and Consulting",
-//       phone: session.user.phone || "07067677446",
-//       email: session.user.email || "Vetsense.equinecare@gmail.com",
-//       address: session.user.address || "Kaduna, Nigeria",
-//     };
-
-//     // Generate PDF with complete data
-//     const pdf = await generatePassport(horse, vetData, passportNo);
-
-//     // Convert PDF to buffer
-//     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
-
-//     // Calculate fingerprint
-//     const fingerprint = crypto
-//       .createHash("sha256")
-//       .update(pdfBuffer)
-//       .digest("hex");
-
-//     // Create a File object for UploadThing
-//     const pdfFile = new File([pdfBuffer], `${passportNo}.pdf`, {
-//       type: "application/pdf",
-//     });
-
-//     // Upload to UploadThing
-//     const uploadResult = await utapi.uploadFiles(pdfFile);
-
-//     if (uploadResult.error) {
-//       throw new Error(`Upload failed: ${uploadResult.error.message}`);
-//     }
-
-//     // Save document record
-//     const document = await prisma.document.create({
-//       data: {
-//         horseId: horse.id,
-//         type: "PASSPORT",
-//         passportNo: passportNo,
-//         fileUrl: uploadResult.data.url, // FIXED: Changed from ufsUrl to url
-//         fingerprint: fingerprint,
-//         metadata: {
-//           generated: new Date().toISOString(),
-//           vetId: session.user.id,
-//           horseName: horse.name,
-//           generatedBy: session.user.name,
-//           uploadthingKey: uploadResult.data.key,
-//           vaccinationCount: horse.vaccinations?.length || 0,
-//           medicalRecordCount: horse.medicalRecords?.length || 0,
-//         },
-//       },
-//     });
-
-//     // Log activity
-//     await prisma.activityLog.create({
-//       data: {
-//         userId: session.user.id,
-//         horseId: horse.id,
-//         action: "PASSPORT_GENERATED",
-//         details: `Generated passport ${passportNo} for ${horse.name} (${
-//           horse.vaccinations?.length || 0
-//         } vaccinations, ${horse.medicalRecords?.length || 0} medical records)`,
-//       },
-//     });
-
-//     return NextResponse.json({
-//       success: true,
-//       document: document,
-//       downloadUrl: uploadResult.data.url,
-//       passportNo: passportNo,
-//       stats: {
-//         vaccinations: horse.vaccinations?.length || 0,
-//         medicalRecords: horse.medicalRecords?.length || 0,
-//       },
-//     });
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: "Failed to generate passport", details: error.message },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 // app/api/horses/[id]/generate-passport/route.js
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -171,8 +25,6 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log(`[Passport Gen] Starting for horse: ${params.id}`);
-
     // Fetch horse data with relations
     const horse = await prisma.horse.findUnique({
       where: { id: params.id },
@@ -190,15 +42,8 @@ export async function POST(req, context) {
     });
 
     if (!horse) {
-      console.error(`[Passport Gen] Horse not found: ${params.id}`);
       return NextResponse.json({ error: "Horse not found" }, { status: 404 });
     }
-
-    console.log(
-      `[Passport Gen] Horse found: ${horse.name}, Vaccinations: ${
-        horse.vaccinations?.length || 0
-      }, Medical Records: ${horse.medicalRecords?.length || 0}`
-    );
 
     // Get next passport number with retry logic
     const year = new Date().getFullYear();
@@ -235,8 +80,6 @@ export async function POST(req, context) {
       }
     }
 
-    console.log(`[Passport Gen] Generated passport number: ${passportNo}`);
-
     // Get vet data
     const vetData = {
       name: session.user.name || "Dr. Simpa Muhammad AbdulAzeez",
@@ -249,7 +92,6 @@ export async function POST(req, context) {
     };
 
     // Generate PDF with timeout protection
-    console.log(`[Passport Gen] Starting PDF generation...`);
     const pdfGenStart = Date.now();
 
     let pdf;
@@ -261,23 +103,11 @@ export async function POST(req, context) {
         ),
       ]);
     } catch (pdfError) {
-      console.error("[Passport Gen] PDF generation failed:", pdfError);
       throw new Error(`PDF generation failed: ${pdfError.message}`);
     }
 
-    console.log(
-      `[Passport Gen] PDF generated in ${Date.now() - pdfGenStart}ms`
-    );
-
     // Convert PDF to buffer
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
-    console.log(
-      `[Passport Gen] PDF buffer size: ${(
-        pdfBuffer.length /
-        1024 /
-        1024
-      ).toFixed(2)}MB`
-    );
 
     // Calculate fingerprint
     const fingerprint = crypto
@@ -291,7 +121,6 @@ export async function POST(req, context) {
     });
 
     // Upload to UploadThing with retry
-    console.log(`[Passport Gen] Uploading to UploadThing...`);
     let uploadResult;
     let uploadAttempts = 0;
     const maxUploadAttempts = 3;
@@ -303,10 +132,6 @@ export async function POST(req, context) {
         throw new Error(uploadResult.error.message);
       } catch (uploadErr) {
         uploadAttempts++;
-        console.error(
-          `[Passport Gen] Upload attempt ${uploadAttempts} failed:`,
-          uploadErr
-        );
 
         if (uploadAttempts >= maxUploadAttempts) {
           throw new Error(
@@ -324,8 +149,6 @@ export async function POST(req, context) {
     if (uploadResult.error) {
       throw new Error(`Upload failed: ${uploadResult.error.message}`);
     }
-
-    console.log(`[Passport Gen] Upload successful: ${uploadResult.data.url}`);
 
     // Save document record
     const document = await prisma.document.create({
@@ -363,8 +186,6 @@ export async function POST(req, context) {
       },
     });
 
-    console.log(`[Passport Gen] Complete in ${Date.now() - startTime}ms`);
-
     return NextResponse.json({
       success: true,
       document: document,
@@ -377,9 +198,6 @@ export async function POST(req, context) {
       },
     });
   } catch (error) {
-    console.error("[Passport Gen] Error:", error);
-    console.error("[Passport Gen] Stack:", error.stack);
-
     return NextResponse.json(
       {
         error: "Failed to generate passport",
